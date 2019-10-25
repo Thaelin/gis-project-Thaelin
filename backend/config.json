@@ -1,0 +1,18 @@
+{
+    "db": {
+        "host": "localhost",
+        "database": "pdt_geo",
+        "user": "postgres",
+        "password": "postgres",
+        "max": 20,
+        "idleTimeoutMillis": 30000,
+        "connectionTimeoutMillis": 2000
+    },
+    "webserver": {
+        "port": 3000
+    },
+    "weather": {
+        "actualizationTimerMs": 300000,
+        "apiToken": "7ad462e299878dee7352d12af9ab95f1"
+    }
+}

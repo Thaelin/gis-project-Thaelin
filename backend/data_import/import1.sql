@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS tracks;
+DROP TABLE IF EXISTS track_points;
+DROP TABLE IF EXISTS route_points;
+DROP TABLE IF EXISTS routes;
+DROP TABLE IF EXISTS waypoints;

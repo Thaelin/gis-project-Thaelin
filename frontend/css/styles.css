@@ -1,0 +1,99 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
+#map {
+    position: absolute;
+    top: 56px;
+    bottom: 0;
+    width: 100%;
+}
+
+#loading {
+    position: absolute;
+    background: url('/assets/loading.gif') no-repeat center center;
+    background-color: white;
+    top: 56px;
+    bottom: 0;
+    width: 100%;
+}
+
+#loading img {
+    position: relative;
+    margin: 0 auto;
+}
+
+.marker-start {
+    background-image: url('../assets/bicycle.png');
+    background-size: cover;
+    width: 20px;
+    height: 20px;
+    margin-bottom: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+  
+.marker-finish {
+    background-image: url('../assets/finish-flag.png');
+    background-size: cover;
+    width: 20px;
+    height: 20px;
+    margin-bottom: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.marker-weather {
+    background-image: url('../assets/information.png');
+    background-size: cover;
+    width: 20px;
+    height: 20px;
+    margin-bottom: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none;
+}
+
+.mapboxgl-popup {
+    max-width: 300px;
+}
+
+.mapboxgl-popup-content {
+    text-align: left;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.mapboxgl-popup-content p {
+    margin-bottom: 0.25rem;
+}
+
+h1 {
+    margin-top: 40px !important;
+}
+
+section#filter-form button {
+    margin: 0 auto;
+}
+
+.alert {
+    display: none;
+}
+
+section#filter-list {
+    background-color: white;
+    position: fixed;
+    display: none;
+    padding: 10px 20px;
+}
+
+ul {
+    list-style-type: none;
+}
+
+li.filter {
+    display: none;
+}

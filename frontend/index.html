@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Hubert's cycling app</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+        <meta name="author" content="Jakub Hubert" />
+        <link href="css/styles.css" rel="stylesheet" />
+        <link href="libs/mapbox/mapbox-gl.css" rel="stylesheet" />
+        <link href="libs/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="#">Hubert's cycling app</a>
+                <button class="navbar-toggler" type="button" 
+                    data-toggle="collapse" data-target="#navbarNavAltMarkup" 
+                    aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation"
+                >
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse justify-content-end" id="navbarNavAltMarkup">
+                    <div class="navbar-nav">
+                    <a class="nav-item nav-link active" href="/index.html">Cycling routes</a>
+                    <a class="nav-item nav-link" href="/filter.html">Route for you</a>
+                    <!--<a class="nav-item nav-link" href="/heatmap.html">Heatmap</a>-->
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <div id="map"></div>
+        <div id="loading"></div>
+        <script src="libs/mapbox/mapbox-gl.js"></script>
+        <script src="libs/jquery/jquery-3.3.1.min.js"></script>
+        <script src="libs/bootstrap/bootstrap.bundle.min.js"></script>
+        <script src="libs/randomcolor/randomColor.js"></script>
+        <script src="js/map.js"></script>
+        <script src="js/main.js"></script>
+    </body>
+</html>

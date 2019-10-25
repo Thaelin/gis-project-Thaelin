@@ -1,0 +1,268 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Hubert's cycling app API documentation",
+    "version": "1.0.0",
+    "title": "Hubert's cycling app API"
+  },
+  "host": "localhost:3000",
+  "basePath": "/api",
+  "paths": {
+    "/cyclingRoutes": {
+      "get": {
+        "tags": [
+          "Cycling routes - all"
+        ],
+        "summary": "Returns all cycling routes",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Route"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occured",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          }
+        }
+      }
+    },
+    "/cyclingRoutes/length": {
+      "post": {
+        "tags": [
+          "Cycling routes - filtered"
+        ],
+        "summary": "Returns filtered list of cycling routes",
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "in": "formData",
+            "name": "minLength",
+            "type": "number",
+            "description": "Minimal route length"
+          },
+          {
+            "in": "formData",
+            "name": "maxLength",
+            "type": "number",
+            "description": "Maximal route length"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Route"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request parameters - NaN",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          },
+          "500": {
+            "description": "Internal server error occured",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          }
+        }
+      }
+    },
+    "/cyclingRoutes/weather": {
+      "post": {
+        "tags": [
+          "Cycling routes - filtered"
+        ],
+        "summary": "Returns filtered list of cycling routes",
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "in": "formData",
+            "name": "minTemp",
+            "type": "number",
+            "description": "Minimal temperature value in Celsius"
+          },
+          {
+            "in": "formData",
+            "name": "maxHumidity",
+            "type": "number",
+            "description": "Maximal humidity value in %"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Route"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request parameters - NaN",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          },
+          "500": {
+            "description": "Internal server error occured",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          }
+        }
+      }
+    },
+    "/weatherPoints/{routeId}": {
+      "get": {
+        "tags": [
+          "Weather data points"
+        ],
+        "summary": "Returns weather data points with actual weather for specific route",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "routeId",
+            "in": "path",
+            "description": "ID of the route",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/WeatherPoint"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request parameters - NaN",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          },
+          "500": {
+            "description": "Internal server error occured",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "WeatherPoint": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "coordinates": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Point"
+              }
+            },
+            "weather": {
+              "type": "object",
+              "properties": {
+                "temperature": {
+                  "type": "number"
+                },
+                "humidity": {
+                  "type": "number"
+                },
+                "pressure": {
+                  "type": "number"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "index": {
+                  "type": "number"
+                }
+              }
+            },
+            "measure_date": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "Route": {
+      "type": "object",
+      "properties": {
+        "fid": {
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "route": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Point"
+          }
+        },
+        "length": {
+          "type": "number"
+        }
+      }
+    },
+    "Point": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number"
+        },
+        "lon": {
+          "type": "number"
+        }
+      }
+    },
+    "ApiError": {
+      "type": "object",
+      "properties": {
+        "errorCode": {
+          "type": "string"
+        },
+        "errorMsg": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
