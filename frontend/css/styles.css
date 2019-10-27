@@ -3,6 +3,20 @@ body {
     padding: 0;
 }
 
+.coordinates {
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    position: absolute;
+    bottom: 40px;
+    left: 10px;
+    padding:5px 10px;
+    margin: 0;
+    font-size: 11px;
+    line-height: 18px;
+    border-radius: 3px;
+    display: none;
+}
+
 #map {
     position: absolute;
     top: 56px;
@@ -25,33 +39,36 @@ body {
 }
 
 .marker-start {
-    background-image: url('../assets/bicycle.png');
-    background-size: cover;
-    width: 20px;
-    height: 20px;
-    margin-bottom: 10px;
+    /* background-image: url('../assets/bicycle.png');
+    background-size: cover; */
+    width: 15px;
+    height: 15px;
+    /* margin-bottom: 10px; */
     border-radius: 50%;
     cursor: pointer;
+    background-color: orange;
 }
   
 .marker-finish {
-    background-image: url('../assets/finish-flag.png');
-    background-size: cover;
-    width: 20px;
-    height: 20px;
-    margin-bottom: 10px;
+    /* background-image: url('../assets/finish-flag.png');
+    background-size: cover; */
+    width: 15px;
+    height: 15px;
+    /* margin-bottom: 10px; */
     border-radius: 50%;
     cursor: pointer;
+    background-color: green;
 }
 
 .marker-weather {
-    background-image: url('../assets/information.png');
-    background-size: cover;
-    width: 20px;
-    height: 20px;
-    margin-bottom: 10px;
+    /* background-image: url('../assets/information.png');
+    background-size: cover; */
+    width: 15px;
+    height: 15px;
+    /* margin-bottom: 10px; */
     border-radius: 50%;
     cursor: pointer;
+    background-color: black;
 }
 
 .hidden {

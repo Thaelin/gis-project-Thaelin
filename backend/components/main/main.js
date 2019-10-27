@@ -214,6 +214,19 @@ class Main {
                 
             });
 
+            this.app.get('/api/allRoads', (req, res) => {
+                this.db.getLoadedRoads((error, data) => {
+                    if (error) {
+                        this.logger.error(error);
+                        throw new Error;
+                    }
+                    else {
+                        res.json(data.rows);
+                    }
+                });
+            });
+
+
             // this.app.get('/api/gridpoints', (req, res) => {
             //     //this.actualizeWeather();
             //     res.json(this.sendData);

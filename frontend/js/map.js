@@ -1,4 +1,11 @@
 var map;
+var canvas;
+var currentPos;
+var coordinates = document.getElementById('coordinates');
+// coordinates geojson
+var geojson;
+
+var lineId = 0;
 
 function formatDate(date) {
     var d = new Date(date),
@@ -13,15 +20,34 @@ function formatDate(date) {
 }
 
 function addMapItem(data, featureType) {
-    let type, id;
+    let type, id, layout, geometry, paint;
 
     switch (featureType) {
         case 'Polygon':
             type = 'fill';
             id = 'polygon_' + data.name;
+            layout = {};
+            geometry = {
+                "type": "Polygon",
+                "coordinates": JSON.parse(data.geo).coordinates
+            };
+            paint = {
+                'fill-color': randomColor({ luminosity: 'dark' }),
+                'fill-opacity': 0.8
+            };
             break;
         case 'Line':
             type = 'line';
+            id = 'line_' + lineId++;
+            layout = {
+                "line-join": "round",
+                "line-cap": "round"
+            };
+            geometry = JSON.parse(data.geo);
+            paint = {
+                "line-color": 'black',
+                "line-width": 1
+            };
             break;
     }
 
@@ -32,18 +58,41 @@ function addMapItem(data, featureType) {
             "type": "geojson",
             "data": {
                 "type": "Feature",
-                "geometry": {
-                    "type": "Polygon",
-                    "coordinates": JSON.parse(data.geo).coordinates
-                }
+                "geometry": geometry
             }
         },
-        "layout": {
+        "layout": layout,
+        "paint": paint
+    }
+
+    //console.log(layerObject);
+
+    map.addLayer(layerObject);
+}
+
+function addFeatureColleciton(data, i) {
+    let id = lineId++;
+
+    console.log(id);
+
+    let layerObject = {
+        "id": "" + i,
+        "type": "line",
+        "source": {
+            "type": "geojson",
+            "data": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties":{},
+                        "geometry": JSON.parse(data.geo)
+                    }
+                    
+                ]
+                
+            }
         },
-        "paint": {
-            'fill-color': randomColor({ luminosity: 'dark' }),
-            'fill-opacity': 0.8
-        }
     }
 
     map.addLayer(layerObject);
@@ -59,6 +108,8 @@ function mapInit(data) {
         zoom: 7.15,
         style: 'mapbox://styles/flaytrue/cjpcl12fo22xq2snw85xbzsm3?optimize=true'
     });
+
+    canvas = map.getCanvasContainer();
 
     if (data) {
         map.on('style.load', function() {
@@ -76,13 +127,26 @@ function mapInit(data) {
     map.addControl(new mapboxgl.NavigationControl);
 
     navigator.geolocation.getCurrentPosition(pos => {
-        console.log(pos);
+        geojson = {
+            "type": "FeatureCollection",
+            "features": [{
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [pos.coords.longitude, pos.coords.latitude]
+                }
+            }]
+        };
+        currentPos = pos;
     });
+    
 }
 
 function loadMapData(data) {
 
     data.forEach((route) => {
+
+        //console.log('route.route: ', route.route);
 
         map.addLayer({
             "id": "route_" + route.name,
@@ -100,7 +164,7 @@ function loadMapData(data) {
                 "line-cap": "round"
             },
             "paint": {
-                "line-color": randomColor({ luminosity: 'dark' }),
+                "line-color": 'black',//randomColor({ luminosity: 'dark' }),
                 "line-width": 3
             }
         });
@@ -153,3 +217,30 @@ function loadMapData(data) {
         $('#loading').hide();
     }
 }
+
+function onMove(e) {
+    var coords = e.lngLat;
+     
+    // Set a UI indicator for dragging.
+    canvas.style.cursor = 'grabbing';
+     
+    // Update the Point feature in `geojson` coordinates
+    // and call setData to the source layer `point` on it.
+    geojson.features[0].geometry.coordinates = [coords.lng, coords.lat];
+    map.getSource('point').setData(geojson);
+}
+     
+function onUp(e) {
+    var coords = e.lngLat;
+     
+    // Print the coordinates of where the point had
+    // finished being dragged to on the map.
+    coordinates.style.display = 'block';
+    coordinates.innerHTML = 'Longitude: ' + coords.lng + '<br />Latitude: ' + coords.lat;
+    canvas.style.cursor = '';
+     
+    // Unbind mouse/touch events
+    map.off('mousemove', onMove);
+    map.off('touchmove', onMove);
+}
+     

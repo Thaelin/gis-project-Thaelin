@@ -1,6 +1,7 @@
 const { Pool } = require('pg');
 const config = require('../../config.json');
 
+
 class Database {
     constructor(logger) {
         this.logger = logger;
@@ -213,6 +214,35 @@ class Database {
             `,
             callback
         );
+    }
+
+    getLoadedRoads(callback) {
+        this.pool.query(
+            `
+            SELECT ST_AsGeoJSON(ST_Union(st_transform(geom_way::geometry, 4326))) geo
+            FROM pgr_dijkstra(
+            'SELECT id, source, target, st_length(st_transform(geom_way::geometry, 4326), true) as cost FROM hh_2po_4pgr',
+            (SELECT source 
+            FROM hh_2po_4pgr
+            ORDER BY ST_Distance(
+                ST_StartPoint(ST_Transform(geom_way, 4326)),
+                ST_SetSRID(ST_MakePoint(17.6087394, 48.4403903), 4326)
+            ) ASC
+            LIMIT 1),
+            (
+            SELECT source 
+            FROM hh_2po_4pgr
+            ORDER BY ST_Distance(
+                ST_StartPoint(ST_Transform(geom_way, 4326)),
+                ST_SetSRID(ST_MakePoint(17.6042662, 48.4934571), 4326)
+            ) ASC
+            LIMIT 1
+            )
+            ) as pt
+            JOIN hh_2po_4pgr rd ON pt.edge = rd.id
+            `,
+            callback
+        )
     }
 }
 
