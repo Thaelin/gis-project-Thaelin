@@ -244,6 +244,49 @@ class Database {
             callback
         )
     }
+
+    getShortestPath(lat, lon, callback) {
+        this.pool.query(
+            `
+            WITH closest AS(
+                SELECT ST_StartPoint(ST_LineMerge(route)) sp
+                FROM cycling_routes
+                ORDER BY ST_Distance(
+                    ST_StartPoint(ST_LineMerge(route)),
+                    ST_SetSRID(ST_MakePoint($1, $2), 4326)
+                ) ASC
+                LIMIT 1
+            )
+            SELECT ST_AsGeoJSON(ST_Union(st_transform(geom_way::geometry, 4326))) geo
+            FROM pgr_dijkstra(
+               'SELECT id, source, target, cost, reverse_cost FROM hh_2po_4pgr',
+              (
+                SELECT source 
+                FROM hh_2po_4pgr
+                ORDER BY ST_Distance(
+                    ST_StartPoint(ST_Transform(geom_way, 4326)),
+                    ST_SetSRID(ST_MakePoint($1, $2), 4326), true
+                ) ASC
+                LIMIT 1
+            ),
+            (
+                SELECT source 
+                FROM hh_2po_4pgr
+                CROSS JOIN closest
+                ORDER BY ST_Distance(
+                    ST_StartPoint(ST_Transform(geom_way, 4326)),
+                    closest.sp, true
+                ) ASC
+                LIMIT 1
+            )
+            ) as pt
+            JOIN hh_2po_4pgr rd ON pt.edge = rd.id
+            `,
+            [lat, lon],
+            callback
+        );
+        
+    }
 }
 
 module.exports = Database;

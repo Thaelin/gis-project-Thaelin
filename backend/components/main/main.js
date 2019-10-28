@@ -226,6 +226,26 @@ class Main {
                 });
             });
 
+            this.app.get('/api/shortestPath/:lat/:lon', (req, res) => {
+                if (isNaN(req.params.lat) || isNaN(req.params.lon)) {
+                    this.logger.warn(`Received /api/shortestPath/:lat/:lon with invalid parameters`);
+                    res.status(400).json({
+                        errorCode: 'PARAMETER_NAN',
+                        errorMsg: `Received /api/shortestPath/:lat/:lon with invalid parameters - is not a number`
+                    });
+                }
+                this.db.getShortestPath(req.params.lat, req.params.lon, (error, data) => {
+                    if (error) {
+                        console.log(error);
+                        this.logger.error(error);
+                        //throw new Error;
+                    }
+                    else {
+                        res.json(data.rows);
+                    }
+                });
+            });
+
 
             // this.app.get('/api/gridpoints', (req, res) => {
             //     //this.actualizeWeather();
@@ -438,7 +458,7 @@ class Main {
                             if (apiResponse.cod === 200) {
                                 this.logger.info('Received weather data from OpenWeatherMap API: ' + apiResponse);
 
-                                console.log(apiResponse);
+                                //console.log(apiResponse);
                                 let sensors= {
                                     temperature: apiResponse.main.temp,
                                     humidity: apiResponse.main.humidity,

@@ -2,6 +2,7 @@ var map;
 var canvas;
 var currentPos;
 var coordinates = document.getElementById('coordinates');
+var collectionId = 0;
 // coordinates geojson
 var geojson;
 
@@ -70,13 +71,13 @@ function addMapItem(data, featureType) {
     map.addLayer(layerObject);
 }
 
-function addFeatureColleciton(data, i) {
-    let id = lineId++;
+function addFeatureCollection(data, color) {
+    let id = collectionId++;
 
     console.log(id);
 
     let layerObject = {
-        "id": "" + i,
+        "id": "" + id,
         "type": "line",
         "source": {
             "type": "geojson",
@@ -93,6 +94,10 @@ function addFeatureColleciton(data, i) {
                 
             }
         },
+        "paint": {
+            "line-color": color ? color : 'black',//randomColor({ luminosity: 'dark' }),
+            "line-width": 3
+        }
     }
 
     map.addLayer(layerObject);
@@ -244,3 +249,21 @@ function onUp(e) {
     map.off('touchmove', onMove);
 }
      
+
+function shortestPath() {
+    console.log(geojson);
+    $('#loading').show();
+    $.get('/api/shortestPath/'+geojson.features[0].geometry.coordinates[0]+'/'+geojson.features[0].geometry.coordinates[1], data => {
+        console.log('data: ', data);
+        //addMapItem(data, 'Polygon');
+        $('#loading').hide();
+        data.forEach((row) => {
+            if (row.geo !== null)
+                addFeatureCollection(row, 'green');
+            else {
+                alert('No path');
+            }
+        });
+        
+    });
+}
