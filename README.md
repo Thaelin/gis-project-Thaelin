@@ -16,7 +16,7 @@ Application will show cycling routes with correspondent weather data. It will he
 Next use case will be to find shortest path to a nearest cycling route. User can either automatically find his location, or select any point on the map. 
 
 **Data source**: 
-Cycling routes will be downloaded from [Cykloportal.sk](http://http://www.cykloportal.sk/). Weather data will be downloaded through OpenWeatherMap API (there is one limitation - max. 60 API requests per minute - should be fine).
+Cycling routes will be downloaded from [Cykloportal.sk](http://www.cykloportal.sk/). Weather data will be downloaded through OpenWeatherMap API (there is one limitation - max. 60 API requests per minute - should be fine).
 
 **Technologies used**: 
 - Node.js for business logic and communication with DB
