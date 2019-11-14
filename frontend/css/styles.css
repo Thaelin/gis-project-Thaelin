@@ -17,31 +17,61 @@ body {
     display: none;
 }
 
-#shortest-path-button {
-    background: rgba(0,0,0,0.5);
-    color: #fff;
-    position: absolute;
-    bottom: 100px;
-    left: 10px;
-    padding:5px 10px;
-    margin: 0;
-    font-size: 11px;
-    line-height: 18px;
-    border-radius: 3px;
+.center {
+    text-align: center;
+}
+
+.control-panel-heading {
+    margin-bottom: 40px;
+}
+
+.control-panel-span {
+    display: block;
+    margin-left: 20px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.control-panel-button {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.control-panel-select {
+    margin-bottom: 30px;
+}
+
+.control-panel-select-wrapper {
+    margin-bottom: 30px;
+    padding-left: 20px;
+    padding-right: 20px;
 }
 
 #map {
     position: absolute;
-    top: 56px;
+    top: 0;
     bottom: 0;
-    width: 100%;
+    left: 20%;
+    width: 80%;
+}
+
+#control-panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 20%;
+    background-color: whitesmoke;
+}
+
+#control-panel-heading {
+    text-align: center;
 }
 
 #loading {
     position: absolute;
     background: url('/assets/loading.gif') no-repeat center center;
-    background-color: white;
-    top: 56px;
+    background-color: rgba(255, 255, 255, 0.575);
     bottom: 0;
     width: 100%;
 }
@@ -51,37 +81,42 @@ body {
     margin: 0 auto;
 }
 
+#legend {
+    padding-left: 30px;
+    padding-right: 30px;
+    display: inline-block;
+}
+
 .marker-start {
-    /* background-image: url('../assets/bicycle.png');
-    background-size: cover; */
     width: 15px;
     height: 15px;
-    /* margin-bottom: 10px; */
     border-radius: 50%;
     cursor: pointer;
     background-color: orange;
 }
   
 .marker-finish {
-    /* background-image: url('../assets/finish-flag.png');
-    background-size: cover; */
     width: 15px;
     height: 15px;
-    /* margin-bottom: 10px; */
     border-radius: 50%;
     cursor: pointer;
-    background-color: green;
+    background-color: red;
 }
 
 .marker-weather {
-    /* background-image: url('../assets/information.png');
-    background-size: cover; */
     width: 15px;
     height: 15px;
-    /* margin-bottom: 10px; */
     border-radius: 50%;
     cursor: pointer;
     background-color: black;
+}
+
+.marker-position {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    cursor: pointer;
+    background-color: #3887be;
 }
 
 .hidden {

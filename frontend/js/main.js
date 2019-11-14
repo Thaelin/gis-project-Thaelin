@@ -1,48 +1,47 @@
 $(document).ready(function() {
+    blockInputs();
     // Initialize map
     mapInit();
 
-    map.on('load', function() {
-        //addDraggableMarker();
+    // Fill select box
+    $.get('/api/getMapParts', (data) => {
+        mapParts = data;
+        data.forEach(part => {
+            $('#parts').append($('<option>', {
+                value: data.osm_id,
+                text: part.name
+            }));
+        });
 
+        $('#parts').val('Slovensko'); 
+        displayMapPartSelection();
+    });
+
+    $('#parts').change(e => {
+        filterRoutes(e.target.value);
+        displayMapPartSelection();
+    });
+
+    map.on('load', function() {
         // load cycling routes
         $.get('/api/cyclingRoutes', data => {
             loadMapData(data);
-        });
 
-        console.log('here');
-
-        // test projection
-        // $.get('/api/test', data => {
-        //     if (data[0])
-        //         addMapItem(data[0], JSON.parse(data[0].geo).type);
-        // });
-
-        // test all roads
-        // $.get('/api/allRoads', data => {
-        //     console.log('data: ', data);
-        //     //addMapItem(data, 'Polygon');
-        //     data.forEach((line, i) => {
-        //         if (line)
-        //             addFeatureColleciton(line, i);
-        //     });
-            
-        // });
-
-        // Add a single point to the map
-        map.addSource('point', {
-            "type": "geojson",
-            "data": geojson
-        });
-            
-        map.addLayer({
-            "id": "point",
-            "type": "circle",
-            "source": "point",
-            "paint": {
-                "circle-radius": 10,
-                "circle-color": "#3887be"
-            }
+            // Add a single point to the map - draggable marker
+            map.addSource('point', {
+                "type": "geojson",
+                "data": geojson
+            });
+                
+            map.addLayer({
+                "id": "point",
+                "type": "circle",
+                "source": "point",
+                "paint": {
+                    "circle-radius": 8,
+                    "circle-color": "#3887be"
+                }
+            });
         });
         
             // When the cursor enters a feature in the point layer, prepare for dragging.
@@ -75,6 +74,8 @@ $(document).ready(function() {
             map.on('touchmove', onMove);
             map.once('touchend', onUp);
         });
+
+        enableInputs();
     });
     
 });

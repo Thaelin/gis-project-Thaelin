@@ -68,74 +68,6 @@ class Main {
                 });
             });
 
-            // API route for getting filtered cycling routes based on condition parameters
-            this.app.post('/api/cyclingRoutes/length', (req, res) => {
-                if (isNaN(req.body.minLength || isNaN(req.body.maxLength))) {
-                    this.logger.warn(`Received POST: /api/cyclingRoutes/length with invalid parameters: ${req.body.minLength}, ${req.body.maxLength}`);
-                    res.status(400).json({
-                        errorCode: 'PARAMETER_NAN',
-                        errorMsg: `Received POST: /api/cyclingRoutes/length with invalid parameters: ${req.body.minLength}, ${req.body.maxLength}`
-                    });
-                }
-                else {
-                    this.db.getCyclingRoutesByLength(req.body.minLength, req.body.maxLength, (error, data) => {
-                        if (error) {
-                            this.logger.error(error);
-                            throw new Error;
-                        }
-                        else {
-                            let parsedData = [];
-    
-                            // parse data to JSON
-                            data.rows.forEach((route) => {
-                                parsedData.push({
-                                    fid: route.fid,
-                                    name: route.name,
-                                    route: JSON.parse(route.route),
-                                    length: route.length
-                                });
-                            });
-                            
-                            res.json(parsedData);
-                        }
-                    });
-                }
-            });
-
-            // API route for getting filtered cycling routes based on comfort parameters
-            this.app.post('/api/cyclingRoutes/weather', (req, res) => {
-                if (isNaN(req.body.minTemp || isNaN(req.body.maxHumidity))) {
-                    this.logger.warn(`Received POST: /api/cyclingRoutes/weather with invalid parameters: ${req.body.minLength}, ${req.body.maxLength}`);
-                    res.status(400).json({
-                        errorCode: 'PARAMETER_NAN',
-                        errorMsg: `Received POST: /api/cyclingRoutes/weather with invalid parameters: ${req.body.minLength}, ${req.body.maxLength}`
-                    });
-                }
-                else {
-                    this.db.getCyclingRoutesByWeather(req.body.minTemp, req.body.maxHumidity, (error, data) => {
-                        if (error) {
-                            this.logger.error(error);
-                            throw new Error;
-                        }
-                        else {
-                            let parsedData = [];
-    
-                            // parse data to JSON
-                            data.rows.forEach((route) => {
-                                parsedData.push({
-                                    fid: route.fid,
-                                    name: route.name,
-                                    route: JSON.parse(route.route),
-                                    length: route.length
-                                });
-                            });
-                            
-                            res.json(parsedData);
-                        }
-                    });
-                }
-            });
-
             // API route for getting specific route's weather points
             this.app.get('/api/weatherPoints/:routeId', (req, res) => {
                 if (isNaN(req.params.routeId)) {
@@ -226,7 +158,7 @@ class Main {
                 });
             });
 
-            this.app.get('/api/shortestPath/:lat/:lon', (req, res) => {
+            this.app.get('/api/shortestPath/:lat/:lon/:mapPart', (req, res) => {
                 if (isNaN(req.params.lat) || isNaN(req.params.lon)) {
                     this.logger.warn(`Received /api/shortestPath/:lat/:lon with invalid parameters`);
                     res.status(400).json({
@@ -234,7 +166,7 @@ class Main {
                         errorMsg: `Received /api/shortestPath/:lat/:lon with invalid parameters - is not a number`
                     });
                 }
-                this.db.getShortestPath(req.params.lat, req.params.lon, (error, data) => {
+                this.db.getShortestPath(req.params.lat, req.params.lon, req.params.mapPart, (error, data) => {
                     if (error) {
                         console.log(error);
                         this.logger.error(error);
@@ -246,11 +178,50 @@ class Main {
                 });
             });
 
+            this.app.get('/api/getMapParts', (req, res) => {
+                this.db.getMapParts((error, data) => {
+                    if (error) {
+                        console.log(error);
+                        this.logger.error(error);
+                    }
+                    else {
+                        res.json(data.rows);
+                    }
+                });
+            });
 
-            // this.app.get('/api/gridpoints', (req, res) => {
-            //     //this.actualizeWeather();
-            //     res.json(this.sendData);
-            // });
+            this.app.get('/api/cyclingRoutesIntersectingPart/:route', (req, res) => {
+                if (req.params.route) {
+                    this.db.cyclingRoutesIntersectingPart(req.params.route, (error, data) => {
+                        if (error) {
+                            console.log(error);
+                            this.logger.error(error);
+                        }
+                        else {
+                            let parsedData = [];
+
+                            // parse data to JSON
+                            data.rows.forEach((route) => {
+                                parsedData.push({
+                                    fid: route.fid,
+                                    name: route.name,
+                                    route: JSON.parse(route.route),
+                                    length: route.length
+                                });
+                            });
+
+                            res.json(parsedData);
+                        }
+                    });
+                }
+                else {
+                    this.logger.warn(`Received /api/cyclingRoutesIntersectingPart/:route with invalid parameter`);
+                    res.status(400).json({
+                        errorCode: 'PARAMETER_EMPTY',
+                        errorMsg: `Received /api/cyclingRoutesIntersectingPart/:route with invalid parameter - is empty`
+                    });
+                }
+            });
 
             this.app.use(express.static(path.join(__dirname, '../../../frontend')));
 
@@ -265,9 +236,7 @@ class Main {
         if (this.logger && this.db) {
             if (config.weather.apiToken != "undefined") {
                 setInterval(this.actualizeWeather.bind(this), config.weather.actualizationTimerMs | 300000);
-                // weather initialization starts also at the point of application start
                 //this.actualizeWeather();
-                this.initGrid();
             }
             else {
                 throw 'Weather actualizer can not start because Dark Sky API token was not provided in config.json';
@@ -276,92 +245,6 @@ class Main {
         else {
             throw 'Weather actualize can not be initialised without initialising Logger and Database component first';
         }
-    }
-
-    initGrid() {
-        let gridSize = 40;
-        let topBoundary = 49.6;
-        let bottomBoundary = 47.7;
-        let leftBoundary = 16.825186;
-        let rightBoundary = 23;
-        let widthDiff = rightBoundary - leftBoundary;
-        let heightDiff = topBoundary - bottomBoundary;
-
-        this.gridPoints = [];
-
-        
-        this.db.pool.query('DELETE FROM weather_data', (err, data) => {
-            if (err)
-                console.log(err);
-            else{
-                var query = 'INSERT INTO weather_data (point, temperature) VALUES ';
-                for (let i = 0; i < gridSize ; i++) {
-                    for (let j = 0; j < gridSize * 2; j++) {
-                        let max = 25 + gridSize - i ;
-                        let min = 0 + gridSize - i ;
-                        /*
-                        let gridPoint = {
-                            data: {
-                                type: "Point",
-                                coordinates: [leftBoundary + j * widthDiff/gridSize, bottomBoundary + i * heightDiff/gridSize]
-                            },
-                            properties: {
-                                temperature: Math.random() * (max - min) + min
-                            }
-                        };
-                        this.gridPoints.push(gridPoint);
-                        */
-                        query += `(ST_SetSRID(ST_MakePoint(${leftBoundary + j  * widthDiff/gridSize /2}, ${bottomBoundary + i * heightDiff/gridSize}), 4326), ${Math.random() * (max - min) + min}), `;
-                        //query += `(ST_SetSRID(ST_MakePoint(${leftBoundary + j * widthDiff/gridSize}, ${bottomBoundary + i * heightDiff/gridSize}), 4326), ${Math.random() * (max - min) + min}), `;
-
-                        /*this.db.pool.query('INSERT INTO weather_data (point, temperature) VALUES (ST_SetSRID(ST_MakePoint($1, $2), 4326), $3)', [leftBoundary + j * widthDiff/gridSize*1.5, bottomBoundary + i * heightDiff/gridSize, Math.random() * (max - min) + min], (err, res) => {
-                            if (err)
-                                console.log(err);
-                            else {
-                                
-                            }
-                        });*/
-                    }
-                }
-
-                query = query.replace(/,([^,]*)$/,'$1');
-                this.db.pool.query(query, (err, res) => {
-                    if (err)
-                        console.log(err);
-                    else {
-                        this.db.pool.query('SELECT temperature, ST_AsGeoJSON(point) as point FROM weather_data', (err, res) => {
-                            if (err) {
-                                console.log(err);
-                            }
-                            else {
-                                let sendData = {
-                                    "type":"FeatureCollection",
-                                    "features":[]
-                                };
-                
-                                res.rows.forEach(feature => {
-                                    console.log(feature);
-                                    sendData.features.push({
-                                        "name": "HeatmapData",
-                                        "type": "Feature",
-                                        "geometry": JSON.parse(feature.point),
-                                        "properties": {
-                                            "temperature": feature.temperature
-                                        }
-                                    });
-                                });
-                                console.log(sendData);
-                                this.sendData = sendData;
-                            }
-                        });
-                    }
-                });
-                
-                
-                
-            }
-            
-        });
     }
 
     actualizeWeather() {
@@ -434,58 +317,6 @@ class Main {
         });
         
         
-    }
-
-    collectData(startI, gridSize) {
-        var requestUrl = 'http://api.openweathermap.org/data/2.5/weather?';
-
-        for (let i = startI; i < startI + 3; i++) {
-            for (let j = 0; j < gridSize; j++) {
-                http.get(
-                    `${requestUrl}lat=${this.gridPoints[i*gridSize + j].data.coordinates[1]}&lon=${this.gridPoints[i*gridSize + j].data.coordinates[0]}&APPID=${config.weather.apiToken}&units=metric`
-                    ,
-                    response => {
-                        let data = '';
-                
-                        // a chunk of data has been received
-                        response.on('data', (chunk) => {
-                            data += chunk;
-                        });
-            
-                        // the whole response has been received
-                        response.on('end', () => {
-                            let apiResponse = JSON.parse(data);
-                            if (apiResponse.cod === 200) {
-                                this.logger.info('Received weather data from OpenWeatherMap API: ' + apiResponse);
-
-                                //console.log(apiResponse);
-                                let sensors= {
-                                    temperature: apiResponse.main.temp,
-                                    humidity: apiResponse.main.humidity,
-                                    pressure: apiResponse.main.pressure,
-                                };
-
-                                this.gridPoints[i*gridSize + j].properties.temperature = sensors.temperature;
-                                
-                                this.db.pool.query('INSERT INTO weather_data(point, temperature) VAULES(($1, $2), $3)', [this.gridPoints[i*gridSize + j].data.coordinates[0], this.gridPoints[i*gridSize + j].data.coordinates[1], this.gridPoints[i*gridSize + j].properties.temperature], (err, data) => {
-                                    if (err)
-                                        console.log(err);
-                                    else {
-                                        setTimeout(this.collectData(startI+3, gridSize).bind(this), 60000);
-                                    }
-                                });
-                            }
-                            else if (apiResponse.cod === 500) {
-                                this.logger.warn('OpenWeather API server error: ' + apiResponse.message);
-                            }
-                            
-                        });
-                    }
-                ).on('error', error => {
-                    this.logger.error('Error occured while getting actual weather data: ' + error);
-                });
-            }
-        }
     }
 
     preparePoints(data) {

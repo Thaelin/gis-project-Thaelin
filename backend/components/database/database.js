@@ -36,111 +36,6 @@ class Database {
         this.pool.query('SELECT fid, name, ST_AsGeoJSON(ST_LineMerge(route)) AS route, ST_Length(route::geography)/1000 as length FROM cycling_routes', callback);
     }
 
-    getCyclingRoutesByLength(minLength, maxLength, callback) {
-        if (minLength && maxLength) {
-            this.pool.query(
-                `
-                SELECT fid, name, ST_AsGeoJSON(ST_LineMerge(route)) AS route, ST_Length(route::geography)/1000 as length FROM cycling_routes
-                WHERE ST_Length(route::geography)/1000 BETWEEN $1 AND $2
-                `, 
-                [ minLength, maxLength ],
-                callback
-            );
-        }
-        else if (minLength) {
-            this.pool.query(
-                `
-                SELECT fid, name, ST_AsGeoJSON(ST_LineMerge(route)) AS route, ST_Length(route::geography)/1000 as length FROM cycling_routes
-                WHERE ST_Length(route::geography)/1000 >= $1
-                `, 
-                [ minLength ],
-                callback
-            );
-        }
-        else if (maxLength) {
-            this.pool.query(
-                `
-                SELECT fid, name, ST_AsGeoJSON(ST_LineMerge(route)) AS route, ST_Length(route::geography)/1000 as length FROM cycling_routes
-                WHERE ST_Length(route::geography)/1000 <= $1
-                `, 
-                [ maxLength ],
-                callback
-            );
-        }
-    }
-
-    getCyclingRoutesByWeather(minTemp, maxHumidity, callback) {
-        if (minTemp && maxHumidity) {
-            this.pool.query(
-                `
-                SELECT fid, name, ST_AsGeoJSON(route) AS route, ST_Length(route::geography)/1000 as length FROM cycling_routes
-                JOIN (
-                    SELECT cycling_route_id, 
-                    AVG((weather).temperature) AS avg_temperature, 
-                    AVG((weather).humidity) AS avg_humidity FROM (
-                        SELECT cycling_route_id, weather, 
-                        rank() OVER (
-                            PARTITION BY point_type, cycling_route_id ORDER BY measure_date DESC
-                        ) 
-                        FROM cycling_routes_weather
-                    ) actual_weather
-                    WHERE rank = 1
-                    GROUP BY cycling_route_id
-                ) temp ON fid = cycling_route_id
-                WHERE avg_temperature >= $1 AND avg_humidity <= $2
-                `, 
-                [ minTemp, maxHumidity ],
-                callback
-            );
-        }
-        else if (minTemp) {
-            this.pool.query(
-                `
-                SELECT fid, name, ST_AsGeoJSON(route) AS route, ST_Length(route::geography)/1000 as length FROM cycling_routes
-                JOIN (
-                    SELECT cycling_route_id, 
-                    AVG((weather).temperature) AS avg_temperature, 
-                    AVG((weather).humidity) AS avg_humidity FROM (
-                        SELECT cycling_route_id, weather, 
-                        rank() OVER (
-                            PARTITION BY point_type, cycling_route_id ORDER BY measure_date DESC
-                        ) 
-                        FROM cycling_routes_weather
-                    ) actual_weather
-                    WHERE rank = 1
-                    GROUP BY cycling_route_id
-                ) temp ON fid = cycling_route_id
-                WHERE avg_temperature >= $1
-                `, 
-                [ minTemp ],
-                callback
-            );
-        }
-        else if (maxHumidity) {
-            this.pool.query(
-                `
-                SELECT fid, name, ST_AsGeoJSON(route) AS route, ST_Length(route::geography)/1000 as length FROM cycling_routes
-                JOIN (
-                    SELECT cycling_route_id, 
-                    AVG((weather).temperature) AS avg_temperature, 
-                    AVG((weather).humidity) AS avg_humidity FROM (
-                        SELECT cycling_route_id, weather, 
-                        rank() OVER (
-                            PARTITION BY point_type, cycling_route_id ORDER BY measure_date DESC
-                        ) 
-                        FROM cycling_routes_weather
-                    ) actual_weather
-                    WHERE rank = 1
-                    GROUP BY cycling_route_id
-                ) temp ON fid = cycling_route_id
-                WHERE avg_humidity <= $1
-                `, 
-                [ maxHumidity ],
-                callback
-            );
-        }
-    }
-
     getAllRouteMilestones(callback) {
         this.pool.query(
             `
@@ -216,53 +111,31 @@ class Database {
         );
     }
 
-    getLoadedRoads(callback) {
-        this.pool.query(
-            `
-            SELECT ST_AsGeoJSON(ST_Union(st_transform(geom_way::geometry, 4326))) geo
-            FROM pgr_dijkstra(
-            'SELECT id, source, target, st_length(st_transform(geom_way::geometry, 4326), true) as cost FROM hh_2po_4pgr',
-            (SELECT source 
-            FROM hh_2po_4pgr
-            ORDER BY ST_Distance(
-                ST_StartPoint(ST_Transform(geom_way, 4326)),
-                ST_SetSRID(ST_MakePoint(17.6087394, 48.4403903), 4326)
-            ) ASC
-            LIMIT 1),
-            (
-            SELECT source 
-            FROM hh_2po_4pgr
-            ORDER BY ST_Distance(
-                ST_StartPoint(ST_Transform(geom_way, 4326)),
-                ST_SetSRID(ST_MakePoint(17.6042662, 48.4934571), 4326)
-            ) ASC
-            LIMIT 1
-            )
-            ) as pt
-            JOIN hh_2po_4pgr rd ON pt.edge = rd.id
-            `,
-            callback
-        )
-    }
-
-    getShortestPath(lat, lon, callback) {
+    getShortestPath(lat, lon, mapPart, callback) {
         this.pool.query(
             `
             WITH closest AS(
+                WITH kraj AS (
+                    SELECT ST_Transform(way, 4326) geo
+                    FROM planet_osm_polygon
+                    WHERE admin_level IN('2','4') AND name = $3
+                )
                 SELECT ST_StartPoint(ST_LineMerge(route)) sp
-                FROM cycling_routes
+                FROM cycling_routes cr
+                CROSS JOIN kraj
+                WHERE ST_Intersects(kraj.geo, ST_LineMerge(cr.route))
                 ORDER BY ST_Distance(
-                    ST_StartPoint(ST_LineMerge(route)),
+                    ST_StartPoint(ST_LineMerge(cr.route)),
                     ST_SetSRID(ST_MakePoint($1, $2), 4326)
                 ) ASC
                 LIMIT 1
             )
             SELECT ST_AsGeoJSON(ST_Union(st_transform(geom_way::geometry, 4326))) geo
             FROM pgr_dijkstra(
-               'SELECT id, source, target, cost, reverse_cost FROM hh_2po_4pgr',
+               'SELECT id, source, target, cost, reverse_cost FROM route_topology',
               (
                 SELECT source 
-                FROM hh_2po_4pgr
+                FROM route_topology
                 ORDER BY ST_Distance(
                     ST_StartPoint(ST_Transform(geom_way, 4326)),
                     ST_SetSRID(ST_MakePoint($1, $2), 4326), true
@@ -271,7 +144,7 @@ class Database {
             ),
             (
                 SELECT source 
-                FROM hh_2po_4pgr
+                FROM route_topology
                 CROSS JOIN closest
                 ORDER BY ST_Distance(
                     ST_StartPoint(ST_Transform(geom_way, 4326)),
@@ -280,12 +153,44 @@ class Database {
                 LIMIT 1
             )
             ) as pt
-            JOIN hh_2po_4pgr rd ON pt.edge = rd.id
+            JOIN route_topology rd ON pt.edge = rd.id
             `,
-            [lat, lon],
+            [lat, lon, mapPart],
             callback
         );
         
+    }
+
+    getMapParts(callback) {
+        this.pool.query(
+            `
+            SELECT osm_id, name, 
+            ST_AsGeoJSON(ST_Transform(way::geometry, 4326)) geo, 
+            ST_AsGeoJSON(ST_Transform(ST_Centroid(way::geometry), 4326)) center 
+            FROM planet_osm_polygon
+	        WHERE admin_level = '4' OR name = 'Slovensko'
+            `,
+            callback
+        );
+    }
+
+    cyclingRoutesIntersectingPart(part, callback) {
+        this.pool.query(
+            `
+            WITH kraj AS (
+                SELECT osm_id, name, 
+                ST_Transform(way, 4326) geo
+                FROM planet_osm_polygon
+                WHERE admin_level = '4' AND name = $1
+            )
+            SELECT cr.fid, cr.name, ST_AsGeoJSON(ST_LineMerge(cr.route)) AS route, ST_Length(cr.route::geography)/1000 as length 
+            FROM cycling_routes cr
+            CROSS JOIN kraj
+            WHERE ST_Intersects(ST_LineMerge(cr.route), kraj.geo)
+            `,
+            [part],
+            callback
+        );
     }
 }
 

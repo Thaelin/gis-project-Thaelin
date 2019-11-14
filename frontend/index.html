@@ -10,28 +10,29 @@
         <link href="libs/bootstrap/bootstrap.min.css" rel="stylesheet" />
     </head>
     <body>
-        <nav class="navbar navbar-expand-md navbar-dark bg-dark">
-            <div class="container">
-                <a class="navbar-brand" href="#">Hubert's cycling app</a>
-                <button class="navbar-toggler" type="button" 
-                    data-toggle="collapse" data-target="#navbarNavAltMarkup" 
-                    aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation"
-                >
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse justify-content-end" id="navbarNavAltMarkup">
-                    <div class="navbar-nav">
-                    <a class="nav-item nav-link active" href="/index.html">Cycling routes</a>
-                    <a class="nav-item nav-link" href="/filter.html">Route for you</a>
-                    <!--<a class="nav-item nav-link" href="/heatmap.html">Heatmap</a>-->
-                    </div>
-                </div>
+        <div id="loading"></div>
+        <div id="control-panel">
+            <h1 class="control-panel-heading center">Hubert's cycling app</h1>
+            <span class="control-panel-span">Select map part: </span>
+            <div class="form-group control-panel-select-wrapper">
+                <select class="form-control control-panel-select" id="parts"></select>
             </div>
-        </nav>
+            <span class="control-panel-span">Shortest path from your point: </span>
+            <div class="center">
+                    <button onclick="shortestPath()" type="button" id="shortest-path-button" class="btn btn-primary control-panel-button">Find path</button>
+            </div>
+            <span class="control-panel-span">Legend: </span>
+            <section id="legend">
+                <div class="marker-start"></div><span>Start route point</span>
+                <div class="marker-weather"></div><span>Intermediate route point</span>
+                <div class="marker-finish"></div><span>Finish route point</span>
+                <div class="marker-position"></div><span>Selected position</span>
+            </section>
+        </div>
         <div id="map"></div>
         <pre id='coordinates' class='coordinates'></pre>
-        <button onclick="shortestPath()" id="shortest-path-button" type="button" class="btn btn-primary">Shortest path</button>
-        <div id="loading"></div>
+        
+        
         <script src="libs/mapbox/mapbox-gl.js"></script>
         <script src="libs/jquery/jquery-3.3.1.min.js"></script>
         <script src="libs/bootstrap/bootstrap.bundle.min.js"></script>

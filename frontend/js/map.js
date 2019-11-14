@@ -5,8 +5,11 @@ var coordinates = document.getElementById('coordinates');
 var collectionId = 0;
 // coordinates geojson
 var geojson;
-
+var shortestPathLayerId = undefined;
 var lineId = 0;
+var displayedRoutes = [];
+var displayedMarkers = [];
+var mapParts = [];
 
 function formatDate(date) {
     var d = new Date(date),
@@ -20,64 +23,13 @@ function formatDate(date) {
     return [day, month, year].join('.') + ' ' + d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds();
 }
 
-function addMapItem(data, featureType) {
-    let type, id, layout, geometry, paint;
-
-    switch (featureType) {
-        case 'Polygon':
-            type = 'fill';
-            id = 'polygon_' + data.name;
-            layout = {};
-            geometry = {
-                "type": "Polygon",
-                "coordinates": JSON.parse(data.geo).coordinates
-            };
-            paint = {
-                'fill-color': randomColor({ luminosity: 'dark' }),
-                'fill-opacity': 0.8
-            };
-            break;
-        case 'Line':
-            type = 'line';
-            id = 'line_' + lineId++;
-            layout = {
-                "line-join": "round",
-                "line-cap": "round"
-            };
-            geometry = JSON.parse(data.geo);
-            paint = {
-                "line-color": 'black',
-                "line-width": 1
-            };
-            break;
-    }
-
-    let layerObject = {
-        "id": id,
-        "type": type,
-        "source": {
-            "type": "geojson",
-            "data": {
-                "type": "Feature",
-                "geometry": geometry
-            }
-        },
-        "layout": layout,
-        "paint": paint
-    }
-
-    //console.log(layerObject);
-
-    map.addLayer(layerObject);
-}
-
 function addFeatureCollection(data, color) {
     let id = collectionId++;
 
     console.log(id);
 
     let layerObject = {
-        "id": "" + id,
+        "id": "collection_" + id,
         "type": "line",
         "source": {
             "type": "geojson",
@@ -101,6 +53,7 @@ function addFeatureCollection(data, color) {
     }
 
     map.addLayer(layerObject);
+    return layerObject.id;
 }
 
 function mapInit(data) {
@@ -153,6 +106,8 @@ function loadMapData(data) {
 
         //console.log('route.route: ', route.route);
 
+        console.log(map.layers);
+
         map.addLayer({
             "id": "route_" + route.name,
             "type": "line",
@@ -174,6 +129,7 @@ function loadMapData(data) {
             }
         });
         
+        displayedRoutes.push("route_" + route.name);
 
         // get actual weather points for each route
         
@@ -193,23 +149,25 @@ function loadMapData(data) {
                         element.className = 'marker-weather';
                 }
 
-                new mapboxgl.Marker(element)
-                    .setLngLat(point.data.coordinates)
-                    .setPopup(
-                        new mapboxgl.Popup({ offset: 25 })
-                            .setHTML(
-                                `<h4>${point.type.toLowerCase().replace(/^./, str => str.toUpperCase())} milestone</h4><p><b>Route:</b> ${route.name}</p>
-                                <p><b>Length:</b> ${route.length.toFixed(2)} km</p>
-                                <img alt="weather-icon" src="/assets/icons/${point.data.weather.icon}.png"/>
-                                <p><b>Description:</b> ${point.data.weather.description}</p>
-                                <p><b>Temperature:</b> ${point.data.weather.temperature} °C</p>
-                                <p><b>Humidity:</b> ${point.data.weather.humidity} %</p>
-                                <p><b>Pressure:</b> ${point.data.weather.pressure} HpA</p>
-                                <p><b>Last weather update:</b> ${formatDate(point.data.measureDate)}</p>
-                                `
-                            )
-                    )
-                    .addTo(map);
+                let marker = new mapboxgl.Marker(element).
+                setLngLat(point.data.coordinates)
+                .setPopup(
+                    new mapboxgl.Popup({ offset: 25 })
+                        .setHTML(
+                            `<h4>${point.type.toLowerCase().replace(/^./, str => str.toUpperCase())} milestone</h4><p><b>Route:</b> ${route.name}</p>
+                            <p><b>Length:</b> ${route.length.toFixed(2)} km</p>
+                            <img alt="weather-icon" src="/assets/icons/${point.data.weather.icon}.png"/>
+                            <p><b>Description:</b> ${point.data.weather.description}</p>
+                            <p><b>Temperature:</b> ${point.data.weather.temperature} °C</p>
+                            <p><b>Humidity:</b> ${point.data.weather.humidity} %</p>
+                            <p><b>Pressure:</b> ${point.data.weather.pressure} HpA</p>
+                            <p><b>Last weather update:</b> ${formatDate(point.data.measureDate)}</p>
+                            `
+                        )
+                )
+                .addTo(map);
+                displayedMarkers.push(marker);
+                
             });
             
 
@@ -251,19 +209,108 @@ function onUp(e) {
      
 
 function shortestPath() {
-    console.log(geojson);
     $('#loading').show();
-    $.get('/api/shortestPath/'+geojson.features[0].geometry.coordinates[0]+'/'+geojson.features[0].geometry.coordinates[1], data => {
-        console.log('data: ', data);
-        //addMapItem(data, 'Polygon');
+    blockInputs();
+    let mapPart = $('#parts').val();
+    if (map.getLayer(shortestPathLayerId)) {
+        map.removeLayer(shortestPathLayerId);
+    }
+    $.get('/api/shortestPath/'+geojson.features[0].geometry.coordinates[0]+'/'+geojson.features[0].geometry.coordinates[1]+'/'+mapPart, data => {
         $('#loading').hide();
-        data.forEach((row) => {
-            if (row.geo !== null)
-                addFeatureCollection(row, 'green');
-            else {
-                alert('No path');
-            }
-        });
+        enableInputs();
+        if (data[0].geo !== null) {
+            shortestPathLayerId = addFeatureCollection(data[0], 'orange');
+        }
+        else {
+            alert('No path');
+        }
         
     });
+}
+
+function filterRoutes(partName) {
+    blockInputs();
+    clearDisplayedRoutes();
+    if (map.getLayer(shortestPathLayerId)) {
+        map.removeLayer(shortestPathLayerId);
+    }
+    if (partName === 'Slovensko') {
+        $.get('/api/cyclingRoutes', data => {
+            loadMapData(data);
+        });
+    }
+    else {
+        $.get('/api/cyclingRoutesIntersectingPart/' + partName, data => {
+            loadMapData(data);
+        });
+    }
+    enableInputs();
+}
+
+function clearDisplayedRoutes() {
+    displayedRoutes.forEach(route => {
+        if (map.getLayer(route)) {
+            map.removeLayer(route);
+        }
+        if (map.getSource(route)) {
+            map.removeSource(route);
+        }
+    });
+    displayedRoutes = [];
+
+    displayedMarkers.forEach(marker => {
+        marker.remove();
+    });
+    displayedMarkers = [];
+}
+
+function blockInputs() {
+    $('#parts').prop('disabled', true);
+    $('#shortest-path-button').prop('disabled', true);
+}
+
+function enableInputs() {
+    $('#parts').prop('disabled', false);
+    $('#shortest-path-button').prop('disabled', false);
+}
+
+function displayMapPartSelection() {
+    if (map.getLayer('mapPartSelection')) {
+        map.removeLayer('mapPartSelection');
+    }
+    if (map.getSource('mapPartSelection')) {
+        map.removeSource('mapPartSelection');
+    }
+
+    let partName = $('#parts').val();
+    let part = mapParts.find(part => {
+        return part.name === partName;
+    });
+
+    console.log(part);
+    map.setCenter(JSON.parse(part.center).coordinates);
+
+    let layerObject = {
+        "id": "mapPartSelection",
+        "type": "fill",
+        "source": {
+            "type": "geojson",
+            "data": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": JSON.parse(part.geo).coordinates   
+                }
+            }
+        },
+        "layout": {},
+        "paint": {
+            "fill-color": "green",
+            "fill-opacity": 0.45
+        }
+    }
+
+    map.addLayer(layerObject);
+
+    
 }
