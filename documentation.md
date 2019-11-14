@@ -3,10 +3,9 @@
 Application works with cycling routes data on the map and it's most important features are:
 
 * show cycling routes and their data - name and length
-* show their weather data - 1 route has more weather points based on it's length
-* filtering cycling routes by desired minimal temperature and maximal humidity
-* filtering cycling routes by their length
-* show temperature heatmap of Slovak republic
+* show cycling route's weather data
+* filter routes based on region - default is whole Slovakia
+* find shortest path from selected position to nearest cycling route
 
 This is it in action:
 
@@ -22,15 +21,15 @@ The application has 2 separate parts, the client which is a [frontend web applic
 
 # Frontend
 
-The frontend application consists of two HTML pages: (`index.html`) and (`filter.html`). Both of the HTML files are displaying showing cycling routes geodata on the map via JS Mapbox library. 
+The frontend application consists of HTML page (`index.html`). HTML file are displaying showing cycling routes geodata on the map via JS Mapbox library. It also displays control panel.
 
-*Filter page* contains formular with selecting user's preferencies on routes and after submitting calls Backend's API with selected parameters. API will return routes that fit into user's preferences. All dynamic JavaScript actions are done via JQuery library - mainly validating form inputs, sending API request via AJAX and initializing map with obtained cycling routes. 
+*Control panel* contains 2 interactive parts: control for selecting region and action button initializing shortest path search. Passive part of the control panel is map legend.
 
-*Index page* contains a map with all cycling routes and their corresponding weather data.
+*Map* contains all cycling routes and their corresponding weather data. Cycling routes are filtered based on intersection with selected region. Selected region is displayed with opaque green color. Shortest route is displayed as orange line.
 
-*Map initialization scripts* are stored in (`js/map.js`) file. *Filtering validations and API calls* are stored in (`js/filter.js`) file. *Script file for index file* is stored in (`js/main.js`).
+*Map initialization scripts* are stored in (`js/map.js`) file. *Script file for index file* is stored in (`js/main.js`).
 
-*Route colors* are generated randomly via a Color generator script.
+*Route colors* are displayed as black.
 
 *Weather icons* are obtained from *OpenWeatherMap repository*.
 
