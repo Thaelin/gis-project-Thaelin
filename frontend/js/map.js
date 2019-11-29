@@ -26,8 +26,6 @@ function formatDate(date) {
 function addFeatureCollection(data, color) {
     let id = collectionId++;
 
-    console.log(id);
-
     let layerObject = {
         "id": "collection_" + id,
         "type": "line",
@@ -198,8 +196,8 @@ function onUp(e) {
      
     // Print the coordinates of where the point had
     // finished being dragged to on the map.
-    coordinates.style.display = 'block';
-    coordinates.innerHTML = 'Longitude: ' + coords.lng + '<br />Latitude: ' + coords.lat;
+    // coordinates.style.display = 'block';
+    // coordinates.innerHTML = 'Longitude: ' + coords.lng + '<br />Latitude: ' + coords.lat;
     canvas.style.cursor = '';
      
     // Unbind mouse/touch events
@@ -211,40 +209,83 @@ function onUp(e) {
 function shortestPath() {
     $('#loading').show();
     blockInputs();
-    let mapPart = $('#parts').val();
-    if (map.getLayer(shortestPathLayerId)) {
-        map.removeLayer(shortestPathLayerId);
+    let part = $('#parts').val();
+    let minTemp = $('#temp-min').val();
+    let maxTemp = $('#temp-max').val();
+    let position = {
+        lat: geojson.features[0].geometry.coordinates[0],
+        lon: geojson.features[0].geometry.coordinates[1]
     }
-    $.get('/api/shortestPath/'+geojson.features[0].geometry.coordinates[0]+'/'+geojson.features[0].geometry.coordinates[1]+'/'+mapPart, data => {
-        $('#loading').hide();
-        enableInputs();
-        if (data[0].geo !== null) {
-            shortestPathLayerId = addFeatureCollection(data[0], 'orange');
+
+    if(validateTempInputs(minTemp, maxTemp)) {
+        if (map.getLayer(shortestPathLayerId)) {
+            map.removeLayer(shortestPathLayerId);
         }
-        else {
-            alert('No path');
-        }
-        
-    });
+
+        debugger
+
+        filterRoutes(part, minTemp, maxTemp);
+
+        $.get('/api/shortestPath/'+position.lat+'/'+position.lon+'/'+part+'/'+minTemp+'/'+maxTemp, data => {
+            $('#loading').hide();
+            enableInputs();
+            if (data[0].geo !== null) {
+                shortestPathLayerId = addFeatureCollection(data[0], 'orange');
+            }
+            else {
+                alert('No path');
+            }   
+        });
+    }
+    
 }
 
-function filterRoutes(partName) {
+function validateTempInputs(minTemp, maxTemp) {
+    if (parseFloat(minTemp) > parseFloat(maxTemp)) {
+        alert('Minimum temperature has to be lower than Maximum temperature');
+        enableInputs();
+        return false;
+    }
+    else if (minTemp == undefined || maxTemp == undefined) {
+        alert('Please define minimum or maximum temperature');
+        enableInputs();
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
+function filter() {
+    let part = $('#parts').val();
+    let minTemp = $('#temp-min').val();
+    let maxTemp = $('#temp-max').val();
+
+    if(validateTempInputs(minTemp, maxTemp)) {
+        filterRoutes(part, minTemp, maxTemp);
+    }
+}
+
+function filterRoutes(partName, minTemp, maxTemp) {
     blockInputs();
     clearDisplayedRoutes();
     if (map.getLayer(shortestPathLayerId)) {
         map.removeLayer(shortestPathLayerId);
     }
-    if (partName === 'Slovensko') {
-        $.get('/api/cyclingRoutes', data => {
-            loadMapData(data);
-        });
-    }
-    else {
-        $.get('/api/cyclingRoutesIntersectingPart/' + partName, data => {
-            loadMapData(data);
-        });
-    }
-    enableInputs();
+    // if (partName === 'Slovensko') {
+    //     $.get('/api/cyclingRoutes', data => {
+    //         loadMapData(data);
+    //         enableInputs();
+    //     });
+    // }
+    // else {
+    $.get('/api/cyclingRoutesFilter/' + partName + '/' + minTemp + '/' + maxTemp, data => {
+        displayMapPartSelection();
+        loadMapData(data);
+        enableInputs();
+    });
+    //}
+    
 }
 
 function clearDisplayedRoutes() {
@@ -275,6 +316,7 @@ function enableInputs() {
 }
 
 function displayMapPartSelection() {
+    console.log('display map part');
     if (map.getLayer('mapPartSelection')) {
         map.removeLayer('mapPartSelection');
     }
@@ -288,6 +330,7 @@ function displayMapPartSelection() {
     });
 
     console.log(part);
+
     map.setCenter(JSON.parse(part.center).coordinates);
 
     let layerObject = {

@@ -158,7 +158,7 @@ class Main {
                 });
             });
 
-            this.app.get('/api/shortestPath/:lat/:lon/:mapPart', (req, res) => {
+            this.app.get('/api/shortestPath/:lat/:lon/:mapPart/:minTemp/:maxTemp', (req, res) => {
                 if (isNaN(req.params.lat) || isNaN(req.params.lon)) {
                     this.logger.warn(`Received /api/shortestPath/:lat/:lon with invalid parameters`);
                     res.status(400).json({
@@ -166,7 +166,7 @@ class Main {
                         errorMsg: `Received /api/shortestPath/:lat/:lon with invalid parameters - is not a number`
                     });
                 }
-                this.db.getShortestPath(req.params.lat, req.params.lon, req.params.mapPart, (error, data) => {
+                this.db.getShortestPath(req.params.lat, req.params.lon, req.params.mapPart, req.params.minTemp, req.params.maxTemp, (error, data) => {
                     if (error) {
                         console.log(error);
                         this.logger.error(error);
@@ -190,35 +190,40 @@ class Main {
                 });
             });
 
-            this.app.get('/api/cyclingRoutesIntersectingPart/:route', (req, res) => {
-                if (req.params.route) {
-                    this.db.cyclingRoutesIntersectingPart(req.params.route, (error, data) => {
-                        if (error) {
-                            console.log(error);
-                            this.logger.error(error);
-                        }
-                        else {
-                            let parsedData = [];
+            this.app.get('/api/cyclingRoutesFilter/:route/:minTemp/:maxTemp', (req, res) => {
+                if (req.params.route && req.params.minTemp && req.params.maxTemp) {
+                    this.db.cyclingRoutesFiltered(
+                        req.params.route, req.params.minTemp, req.params.maxTemp, 
+                        (error, data) => {
+                            if (error) {
+                                console.log(error);
+                                this.logger.error(error);
+                            }
+                            else {
+                                let parsedData = [];
 
-                            // parse data to JSON
-                            data.rows.forEach((route) => {
-                                parsedData.push({
-                                    fid: route.fid,
-                                    name: route.name,
-                                    route: JSON.parse(route.route),
-                                    length: route.length
+                                // parse data to JSON
+                                data.rows.forEach((route) => {
+                                    parsedData.push({
+                                        fid: route.fid,
+                                        name: route.name,
+                                        route: JSON.parse(route.route),
+                                        length: route.length
+                                    });
                                 });
-                            });
 
-                            res.json(parsedData);
+                                console.log(parsedData);
+
+                                res.json(parsedData);
+                            }
                         }
-                    });
+                    );
                 }
                 else {
-                    this.logger.warn(`Received /api/cyclingRoutesIntersectingPart/:route with invalid parameter`);
+                    this.logger.warn(`Received /api/cyclingRoutesFilter/:route/:minTemp/:maxTemp with invalid parameters`);
                     res.status(400).json({
                         errorCode: 'PARAMETER_EMPTY',
-                        errorMsg: `Received /api/cyclingRoutesIntersectingPart/:route with invalid parameter - is empty`
+                        errorMsg: `Received /api/cyclingRoutesFilter/:route/:minTemp/:maxTemp with invalid parameters - is empty`
                     });
                 }
             });

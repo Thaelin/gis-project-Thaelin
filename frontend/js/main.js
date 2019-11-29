@@ -1,4 +1,5 @@
 $(document).ready(function() {
+    $('#temp-range').slider({});
     blockInputs();
     // Initialize map
     mapInit();
@@ -14,11 +15,6 @@ $(document).ready(function() {
         });
 
         $('#parts').val('Slovensko'); 
-        displayMapPartSelection();
-    });
-
-    $('#parts').change(e => {
-        filterRoutes(e.target.value);
         displayMapPartSelection();
     });
 

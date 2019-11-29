@@ -22,7 +22,7 @@ body {
 }
 
 .control-panel-heading {
-    margin-bottom: 40px;
+    margin-bottom: 20px;
 }
 
 .control-panel-span {
@@ -37,11 +37,11 @@ body {
     margin-bottom: 30px;
 }
 
-.control-panel-select {
+.control-panel-input {
     margin-bottom: 30px;
 }
 
-.control-panel-select-wrapper {
+.control-panel-input-wrapper {
     margin-bottom: 30px;
     padding-left: 20px;
     padding-right: 20px;

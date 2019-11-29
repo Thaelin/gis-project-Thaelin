@@ -111,7 +111,7 @@ class Database {
         );
     }
 
-    getShortestPath(lat, lon, mapPart, callback) {
+    getShortestPath(lat, lon, mapPart, minTemp, maxTemp, callback) {
         this.pool.query(
             `
             WITH closest AS(
@@ -119,11 +119,24 @@ class Database {
                     SELECT ST_Transform(way, 4326) geo
                     FROM planet_osm_polygon
                     WHERE admin_level IN('2','4') AND name = $3
+                    LIMIT 1
                 )
                 SELECT ST_StartPoint(ST_LineMerge(route)) sp
                 FROM cycling_routes cr
                 CROSS JOIN kraj
-                WHERE ST_Intersects(kraj.geo, ST_LineMerge(cr.route))
+                WHERE cr.fid IN (
+                    SELECT cycling_route_id FROM (
+                        SELECT cycling_route_id, point_type, weather, measure_date, 
+                        rank() OVER (
+                            PARTITION BY point_type, cycling_route_id ORDER BY measure_date DESC
+                        ) 
+                        FROM cycling_routes_weather
+                    ) weather
+                    WHERE rank = 1
+                    GROUP BY cycling_route_id
+                    HAVING AVG((weather).temperature) >= $4 AND AVG((weather).temperature) <= $5
+                )
+                AND ST_Intersects(kraj.geo, ST_LineMerge(cr.route))
                 ORDER BY ST_Distance(
                     ST_StartPoint(ST_LineMerge(cr.route)),
                     ST_SetSRID(ST_MakePoint($1, $2), 4326)
@@ -155,7 +168,7 @@ class Database {
             ) as pt
             JOIN route_topology rd ON pt.edge = rd.id
             `,
-            [lat, lon, mapPart],
+            [lat, lon, mapPart, minTemp, maxTemp],
             callback
         );
         
@@ -189,6 +202,37 @@ class Database {
             WHERE ST_Intersects(ST_LineMerge(cr.route), kraj.geo)
             `,
             [part],
+            callback
+        );
+    }
+
+    cyclingRoutesFiltered(part, minTemp, maxTemp, callback) {
+        this.pool.query(
+            `
+            WITH kraj AS (
+                SELECT osm_id, name, 
+                ST_Transform(way, 4326) geo
+                FROM planet_osm_polygon
+                WHERE (admin_level = '4' AND name = $1) OR (admin_level = '2' AND name = $1)
+            )
+            SELECT cr.fid, cr.name, ST_AsGeoJSON(ST_LineMerge(cr.route)) AS route, ST_Length(cr.route::geography)/1000 as length 
+            FROM cycling_routes cr
+            CROSS JOIN kraj
+            WHERE cr.fid IN (
+                SELECT cycling_route_id FROM (
+                    SELECT cycling_route_id, point_type, weather, measure_date, 
+                    rank() OVER (
+                        PARTITION BY point_type, cycling_route_id ORDER BY measure_date DESC
+                    ) 
+                    FROM cycling_routes_weather
+                ) weather
+                WHERE rank = 1
+                GROUP BY cycling_route_id
+                HAVING AVG((weather).temperature) >= $2 AND AVG((weather).temperature) <= $3
+            )
+            AND ST_Intersects(ST_LineMerge(cr.route), kraj.geo)  
+            `,
+            [part, minTemp, maxTemp],
             callback
         );
     }
