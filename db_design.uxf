@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="14.3.0">
+  <zoom_level>10</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>0</x>
+      <y>230</y>
+      <w>220</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>cycling_routes_weather
+--
+id&lt;pk&gt;: integer
+cycling_route_id&lt;fk&gt;: integer
+point_type: character varying
+weather: weather_type
+measure_date: timestamp</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>20</x>
+      <y>30</y>
+      <w>180</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>cycling_routes
+--
+fid&lt;pk&gt;: integer
+name: character varying
+route: geometry</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>100</x>
+      <y>120</y>
+      <w>40</w>
+      <h>130</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=*
+m2=1</panel_attributes>
+    <additional_attributes>10.0;110.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>250</x>
+      <y>20</y>
+      <w>220</w>
+      <h>350</h>
+    </coordinates>
+    <panel_attributes>route_topology
+--
+id: integer
+osm_id: bigint
+osm_name: character varying
+osm_meta: character varying
+osm_source_id: bigint
+osm_target_id: bigint
+clazz: integer
+flags: integer
+source: integer
+target: integer
+km: double precision
+kmh: integer
+cost: double precision
+reverse_cost: double precision
+x1: double precision
+y1: double precision
+x2: double precision
+y2: double precision
+geom_way: geometry</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>20</x>
+      <y>390</y>
+      <w>160</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>planet_osm_polygon</panel_attributes>
+    <additional_attributes/>
+  </element>
+</diagram>

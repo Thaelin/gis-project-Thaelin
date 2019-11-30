@@ -4,19 +4,7 @@ $(document).ready(function() {
     // Initialize map
     mapInit();
 
-    // Fill select box
-    $.get('/api/getMapParts', (data) => {
-        mapParts = data;
-        data.forEach(part => {
-            $('#parts').append($('<option>', {
-                value: data.osm_id,
-                text: part.name
-            }));
-        });
-
-        $('#parts').val('Slovensko'); 
-        displayMapPartSelection();
-    });
+    initializeInputs();
 
     map.on('load', function() {
         // load cycling routes
@@ -75,3 +63,20 @@ $(document).ready(function() {
     });
     
 });
+
+function initializeInputs() {
+    // Fill select box
+    $.get('/api/getMapParts', (data) => {
+        mapParts = data;
+        data.forEach(part => {
+            $('#parts').append($('<option>', {
+                value: data.osm_id,
+                text: part.name
+            }));
+        });
+
+        $('#parts').val('Slovensko'); 
+        displayMapPartSelection();
+        
+    });
+}

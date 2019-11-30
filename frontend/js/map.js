@@ -46,7 +46,11 @@ function addFeatureCollection(data, color) {
         },
         "paint": {
             "line-color": color ? color : 'black',//randomColor({ luminosity: 'dark' }),
-            "line-width": 3
+            "line-width": 5
+        },
+        "layout": {
+            "line-join": "round",
+            "line-cap": "round"
         }
     }
 
@@ -152,7 +156,7 @@ function loadMapData(data) {
                 .setPopup(
                     new mapboxgl.Popup({ offset: 25 })
                         .setHTML(
-                            `<h4>${point.type.toLowerCase().replace(/^./, str => str.toUpperCase())} milestone</h4><p><b>Route:</b> ${route.name}</p>
+                            `<h4>${route.name}</h4><p><b>Point type:</b> ${point.type.toLowerCase().replace(/^./, str => str.toUpperCase())} milestone</p>
                             <p><b>Length:</b> ${route.length.toFixed(2)} km</p>
                             <img alt="weather-icon" src="/assets/icons/${point.data.weather.icon}.png"/>
                             <p><b>Description:</b> ${point.data.weather.description}</p>
@@ -192,12 +196,6 @@ function onMove(e) {
 }
      
 function onUp(e) {
-    var coords = e.lngLat;
-     
-    // Print the coordinates of where the point had
-    // finished being dragged to on the map.
-    // coordinates.style.display = 'block';
-    // coordinates.innerHTML = 'Longitude: ' + coords.lng + '<br />Latitude: ' + coords.lat;
     canvas.style.cursor = '';
      
     // Unbind mouse/touch events
@@ -272,19 +270,12 @@ function filterRoutes(partName, minTemp, maxTemp) {
     if (map.getLayer(shortestPathLayerId)) {
         map.removeLayer(shortestPathLayerId);
     }
-    // if (partName === 'Slovensko') {
-    //     $.get('/api/cyclingRoutes', data => {
-    //         loadMapData(data);
-    //         enableInputs();
-    //     });
-    // }
-    // else {
+
     $.get('/api/cyclingRoutesFilter/' + partName + '/' + minTemp + '/' + maxTemp, data => {
         displayMapPartSelection();
         loadMapData(data);
         enableInputs();
     });
-    //}
     
 }
 
@@ -316,7 +307,6 @@ function enableInputs() {
 }
 
 function displayMapPartSelection() {
-    console.log('display map part');
     if (map.getLayer('mapPartSelection')) {
         map.removeLayer('mapPartSelection');
     }
@@ -328,8 +318,6 @@ function displayMapPartSelection() {
     let part = mapParts.find(part => {
         return part.name === partName;
     });
-
-    console.log(part);
 
     map.setCenter(JSON.parse(part.center).coordinates);
 
@@ -354,6 +342,5 @@ function displayMapPartSelection() {
     }
 
     map.addLayer(layerObject);
-
     
 }

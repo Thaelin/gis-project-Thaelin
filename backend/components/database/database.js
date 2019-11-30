@@ -136,7 +136,7 @@ class Database {
                     GROUP BY cycling_route_id
                     HAVING AVG((weather).temperature) >= $4 AND AVG((weather).temperature) <= $5
                 )
-                AND ST_Intersects(kraj.geo, ST_LineMerge(cr.route))
+                AND ST_Contains(kraj.geo, ST_StartPoint(ST_LineMerge(cr.route)))
                 ORDER BY ST_Distance(
                     ST_StartPoint(ST_LineMerge(cr.route)),
                     ST_SetSRID(ST_MakePoint($1, $2), 4326)
@@ -187,25 +187,6 @@ class Database {
         );
     }
 
-    cyclingRoutesIntersectingPart(part, callback) {
-        this.pool.query(
-            `
-            WITH kraj AS (
-                SELECT osm_id, name, 
-                ST_Transform(way, 4326) geo
-                FROM planet_osm_polygon
-                WHERE admin_level = '4' AND name = $1
-            )
-            SELECT cr.fid, cr.name, ST_AsGeoJSON(ST_LineMerge(cr.route)) AS route, ST_Length(cr.route::geography)/1000 as length 
-            FROM cycling_routes cr
-            CROSS JOIN kraj
-            WHERE ST_Intersects(ST_LineMerge(cr.route), kraj.geo)
-            `,
-            [part],
-            callback
-        );
-    }
-
     cyclingRoutesFiltered(part, minTemp, maxTemp, callback) {
         this.pool.query(
             `
@@ -230,7 +211,7 @@ class Database {
                 GROUP BY cycling_route_id
                 HAVING AVG((weather).temperature) >= $2 AND AVG((weather).temperature) <= $3
             )
-            AND ST_Intersects(ST_LineMerge(cr.route), kraj.geo)  
+            AND ST_Contains(kraj.geo, ST_StartPoint(ST_LineMerge(cr.route)))  
             `,
             [part, minTemp, maxTemp],
             callback
