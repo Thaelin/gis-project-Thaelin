@@ -516,6 +516,10 @@ WHERE admin_level = '4' OR name = 'Slovensko'
 "Execution time: 588.761 ms"
 ```
 
+# Data model of own tables
+
+![Screenshot 6](./doc-images/db_design.png?raw=true)
+
 # Dependencies
 1. Node.js
 ```
