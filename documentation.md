@@ -28,11 +28,11 @@ The frontend application consists of HTML page (`index.html`). HTML file are dis
 
 *Control panel* contains 2 interactive parts: control for selecting region and action button initializing shortest path search. Passive part of the control panel is map legend.
 
-*Map* contains all cycling routes and their corresponding weather data. Cycling routes are filtered based on intersection with selected region. Selected region is displayed with opaque green color. Shortest route is displayed as orange line.
+*Map* contains all cycling routes and their corresponding weather data. Cycling routes are filtered based on inclusion of route start point with selected region. Selected region is displayed with opaque green color. Shortest route is displayed as orange line.
 
 *Map initialization scripts* are stored in (`js/map.js`) file. *Script file for index file* is stored in (`js/main.js`).
 
-*Route colors* are displayed as black.
+*Route colors* are displayed as black. More information about color's and their meanings are in the Legend part of the UI.
 
 *Weather icons* are obtained from *OpenWeatherMap repository*.
 
