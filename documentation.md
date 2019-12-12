@@ -202,9 +202,10 @@ sudo apt-get install curl
 curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
 sudo apt-get install nodejs
 ```
-2. Install PostgreSQL database.
-3. Clone `https://github.com/fiit-pdt-2019/gis-project-Thaelin` repo.
-4. Navigate into `backend` folder in the cloned repository and install dependencies.
+2. Clone `https://github.com/fiit-pdt-2019/gis-project-Thaelin` repo.
+3. Navigate into `/backend` folder in the cloned repository and install dependencies.
 ```
 npm install
 ```
+4. Install PostgreSQL database.
+5. 
