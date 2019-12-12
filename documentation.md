@@ -9,14 +9,15 @@ Application works with cycling routes data on the map and it's most important fe
 
 This is it in action:
 
-![Screenshot 1](./doc-images/1.png?raw=true "Default view")
-Route point's detail
+## Default view
+![Screenshot 1](./doc-images/1.png?raw=true "")
+## Route point's detail
 ![Screenshot 2](./doc-images/5.png?raw=true)
-
+## Legend display
 ![Screenshot 3](./doc-images/2.png?raw=true)
-
+## Filtering region's and average temperature range
 ![Screenshot 4](./doc-images/3.png?raw=true)
-Shortest path from selected point to nearest filtered route start
+## Shortest path from selected point to nearest filtered route start
 ![Screenshot 5](./doc-images/4.png?raw=true)
 
 The application has 2 separate parts, the client which is a [frontend web application](#frontend) using mapbox API and mapbox.js and the [backend application](#backend) written in [Node.js](https://nodejs.org/en/), backed by PostGIS. The frontend application communicates with backend using an [API](#api). API is documented in interactive form with Swagger tool.
