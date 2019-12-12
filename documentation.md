@@ -112,16 +112,15 @@ I used OSM data to select Slovakia's administrative regions. This data is used f
   }
 ]
 
-## Communication with database
+## Queries
 All database communication is stored in *Database component*. It is located in (`Backend/components/database/database.js`).
 
-### Queries
 **Notes**: 
 - Ogr2ogr tool caused my lines to be of type MultiLineString => I needed to use ST_LineMerge everytime I wanted to use simple LineString methods.
 - cycling_routes_weather table contained weather data for all cycling_routes with historic data and more data point types => that's why I needed to use window function to prefilter them
 
 
-**Querying cycling routes filtered by average temperature and region**
+### Querying cycling routes filtered by average temperature and region
 
 This query covers first basic Use case. Showcase and filtering of cycling routes based on average temperature of all checkpoints and selected region. `WITH` part selects a row with region - there can be 2 types of administrative types - 4 for subregions and 2 for countries. We can select whole Slovakia region that's why we need to use this `OR` condition. 
 
@@ -154,12 +153,12 @@ WHERE cr.fid IN (
 AND ST_Contains(kraj.geo, ST_StartPoint(ST_LineMerge(cr.route)))
 ```
 
-Example result
+**Example result**
 ```
 4;"5118 - Machulince - Topoľčianky - Zubria Obora - Zlaté Moravce";"{"type":"LineString","coordinates":[[18.4297865442932,48.4130989853293],[18.4283393248916,48.4137638378888],[18.4281733632088,48.4138518478721],[18.4268509503454,48.4142039716244],[18.42414367944,48.414924480021],[18.4229192510247,48.4152819681913],[18.422 (...)";24.6997083760805
 ```
 
-Analyze
+**Analyze**
 ```
 "Merge Join  (cost=8337.36..8342.76 rows=1 width=362) (actual time=247.469..247.472 rows=1 loops=1)"
 "  Merge Cond: (cr.fid = weather.cycling_route_id)"
@@ -193,7 +192,55 @@ Analyze
 "Execution time: 248.542 ms"
 ```
 
-I saw that most of the computation time is in the `weather_data` aggregations. There is a sort condition based on average temperature. However, weather is a composite type so I need to figure out how to index composite types.
+**Optimize**
+I saw that most of the computation time is in the `weather_data` aggregations. There is a sort condition based on average temperature. However, weather is a composite type and I tried many indices but none of these improved my solution. Only thing I managed to optimize was non critical part of the query - selecting startpoint of route data.
+
+```SQL
+CREATE INDEX
+ON cycling_routes
+USING gist
+(ST_StartPoint(ST_LineMerge(route)))
+WITH (FILLFACTOR=100);
+```
+
+```
+"Merge Join  (cost=6409.72..6415.09 rows=1 width=362) (actual time=230.597..230.599 rows=1 loops=1)"
+"  Merge Cond: (cr.fid = weather.cycling_route_id)"
+"  CTE kraj"
+"    ->  Index Scan using name on planet_osm_polygon  (cost=0.43..12.47 rows=1 width=58) (actual time=4.836..4.839 rows=1 loops=1)"
+"          Index Cond: (name = 'Nitriansky kraj'::text)"
+"          Filter: ((admin_level = '4'::text) OR (admin_level = '2'::text))"
+"  ->  Sort  (cost=8.45..8.45 rows=1 width=354) (actual time=12.915..12.916 rows=1 loops=1)"
+"        Sort Key: cr.fid"
+"        Sort Method: quicksort  Memory: 25kB"
+"        ->  Nested Loop  (cost=0.13..8.44 rows=1 width=354) (actual time=10.448..12.902 rows=1 loops=1)"
+"              ->  CTE Scan on kraj  (cost=0.00..0.02 rows=1 width=32) (actual time=4.933..4.937 rows=1 loops=1)"
+"              ->  Index Scan using cycling_routes_st_startpoint_idx on cycling_routes cr  (cost=0.13..8.41 rows=1 width=354) (actual time=5.507..7.955 rows=1 loops=1)"
+"                    Index Cond: (kraj.geo ~ st_startpoint(st_linemerge(route)))"
+"                    Filter: _st_contains(kraj.geo, st_startpoint(st_linemerge(route)))"
+"                    Rows Removed by Filter: 6"
+"  ->  GroupAggregate  (cost=6388.80..6391.19 rows=16 width=4) (actual time=206.454..206.460 rows=4 loops=1)"
+"        Group Key: weather.cycling_route_id"
+"        Filter: ((avg((weather.weather).temperature) >= '-4.2'::double precision) AND (avg((weather.weather).temperature) <= '30'::double precision))"
+"        ->  Sort  (cost=6388.80..6389.34 rows=215 width=57) (actual time=206.437..206.438 rows=10 loops=1)"
+"              Sort Key: weather.cycling_route_id"
+"              Sort Method: quicksort  Memory: 31kB"
+"              ->  Subquery Scan on weather  (cost=4878.13..6380.47 rows=215 width=57) (actual time=144.140..206.383 rows=47 loops=1)"
+"                    Filter: (weather.rank = 1)"
+"                    Rows Removed by Filter: 42877"
+"                    ->  WindowAgg  (cost=4878.13..5843.92 rows=42924 width=80) (actual time=144.138..202.646 rows=42924 loops=1)"
+"                          ->  Sort  (cost=4878.13..4985.44 rows=42924 width=72) (actual time=144.127..155.695 rows=42924 loops=1)"
+"                                Sort Key: cycling_routes_weather.point_type, cycling_routes_weather.cycling_route_id, cycling_routes_weather.measure_date DESC"
+"                                Sort Method: external merge  Disk: 3744kB"
+"                                ->  Seq Scan on cycling_routes_weather  (cost=0.00..1575.24 rows=42924 width=72) (actual time=0.012..11.227 rows=42924 loops=1)"
+"Planning time: 0.964 ms"
+"Execution time: 231.731 ms"
+```
+
+**Evaluation of optimisation**
+Minor optimisation reduced the query execution time by **6.77 %**.
+
+
 
 **Querying shortest path from selected position to nearest cycling route**
 
