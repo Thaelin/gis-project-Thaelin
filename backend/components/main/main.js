@@ -42,31 +42,6 @@ class Main {
                 console.log(req.params);
                 res.sendFile(path.join(__dirname, '../../../frontend/index.html'));
             });
-            
-            // API route for getting all cycling routes
-            this.app.get('/api/cyclingRoutes', (req, res) => {
-                this.db.allCyclingRoutes((error, data) => {
-                    if (error) {
-                        this.logger.error(error);
-                        throw new Error;
-                    }
-                    else {
-                        let parsedData = [];
-
-                        // parse data to JSON
-                        data.rows.forEach((route) => {
-                            parsedData.push({
-                                fid: route.fid,
-                                name: route.name,
-                                route: JSON.parse(route.route),
-                                length: route.length
-                            });
-                        });
-
-                        res.json(parsedData);
-                    }
-                });
-            });
 
             // API route for getting specific route's weather points
             this.app.get('/api/weatherPoints/:routeId', (req, res) => {
@@ -133,32 +108,7 @@ class Main {
                 }
             });
 
-            this.app.get('/api/test', (req, res) => {
-                this.db.testProjection((error, data) => {
-                    if (error) {
-                        this.logger.error(error);
-                        throw new Error;
-                    }
-                    else {
-                        res.json(data.rows);
-                    }
-                });
-                
-            });
-
-            this.app.get('/api/allRoads', (req, res) => {
-                this.db.getLoadedRoads((error, data) => {
-                    if (error) {
-                        this.logger.error(error);
-                        throw new Error;
-                    }
-                    else {
-                        res.json(data.rows);
-                    }
-                });
-            });
-
-            this.app.get('/api/shortestPath/:lat/:lon/:mapPart/:minTemp/:maxTemp', (req, res) => {
+            this.app.get('/api/shortestPath/:lat/:lon/:region/:minTemp/:maxTemp', (req, res) => {
                 if (isNaN(req.params.lat) || isNaN(req.params.lon)) {
                     this.logger.warn(`Received /api/shortestPath/:lat/:lon with invalid parameters`);
                     res.status(400).json({
@@ -166,7 +116,7 @@ class Main {
                         errorMsg: `Received /api/shortestPath/:lat/:lon with invalid parameters - is not a number`
                     });
                 }
-                this.db.getShortestPath(req.params.lat, req.params.lon, req.params.mapPart, req.params.minTemp, req.params.maxTemp, (error, data) => {
+                this.db.getShortestPath(req.params.lat, req.params.lon, req.params.region, req.params.minTemp, req.params.maxTemp, (error, data) => {
                     if (error) {
                         console.log(error);
                         this.logger.error(error);
@@ -190,10 +140,10 @@ class Main {
                 });
             });
 
-            this.app.get('/api/cyclingRoutesFilter/:route/:minTemp/:maxTemp', (req, res) => {
-                if (req.params.route && req.params.minTemp && req.params.maxTemp) {
+            this.app.get('/api/cyclingRoutesFilter/:region/:minTemp/:maxTemp', (req, res) => {
+                if (req.params.region && req.params.minTemp && req.params.maxTemp) {
                     this.db.cyclingRoutesFiltered(
-                        req.params.route, req.params.minTemp, req.params.maxTemp, 
+                        req.params.region, req.params.minTemp, req.params.maxTemp, 
                         (error, data) => {
                             if (error) {
                                 console.log(error);
@@ -203,10 +153,10 @@ class Main {
                                 let parsedData = [];
 
                                 // parse data to JSON
-                                data.rows.forEach((route) => {
+                                data.rows.forEach((region) => {
                                     parsedData.push({
-                                        fid: route.fid,
-                                        name: route.name,
+                                        fid: region.fid,
+                                        name: region.name,
                                         route: JSON.parse(route.route),
                                         length: route.length
                                     });
@@ -220,10 +170,10 @@ class Main {
                     );
                 }
                 else {
-                    this.logger.warn(`Received /api/cyclingRoutesFilter/:route/:minTemp/:maxTemp with invalid parameters`);
+                    this.logger.warn(`Received /api/cyclingRoutesFilter/:region/:minTemp/:maxTemp with invalid parameters`);
                     res.status(400).json({
                         errorCode: 'PARAMETER_EMPTY',
-                        errorMsg: `Received /api/cyclingRoutesFilter/:route/:minTemp/:maxTemp with invalid parameters - is empty`
+                        errorMsg: `Received /api/cyclingRoutesFilter/:region/:minTemp/:maxTemp with invalid parameters - is empty`
                     });
                 }
             });

@@ -8,12 +8,12 @@
   "host": "localhost:3000",
   "basePath": "/api",
   "paths": {
-    "/cyclingRoutes": {
+    "/getMapParts": {
       "get": {
         "tags": [
-          "Cycling routes - all"
+          "Slovakia regions"
         ],
-        "summary": "Returns all cycling routes",
+        "summary": "Returns all administrative parts of Slovakia country",
         "produces": [
           "application/json"
         ],
@@ -36,75 +36,33 @@
         }
       }
     },
-    "/cyclingRoutes/length": {
-      "post": {
+    "/cyclingRoutesFilter/{region}/{minTemp}/{maxTemp}": {
+      "get": {
         "tags": [
-          "Cycling routes - filtered"
+          "Cycling routes - all"
         ],
-        "summary": "Returns filtered list of cycling routes",
-        "consumes": [
-          "application/x-www-form-urlencoded"
+        "summary": "Returns all cycling routes",
+        "produces": [
+          "application/json"
         ],
         "parameters": [
           {
-            "in": "formData",
-            "name": "minLength",
-            "type": "number",
-            "description": "Minimal route length"
+            "in": "path",
+            "name": "region",
+            "type": "string",
+            "description": "Region of Slovakia country"
           },
           {
-            "in": "formData",
-            "name": "maxLength",
-            "type": "number",
-            "description": "Maximal route length"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Route"
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request parameters - NaN",
-            "schema": {
-              "$ref": "#/definitions/ApiError"
-            }
-          },
-          "500": {
-            "description": "Internal server error occured",
-            "schema": {
-              "$ref": "#/definitions/ApiError"
-            }
-          }
-        }
-      }
-    },
-    "/cyclingRoutes/weather": {
-      "post": {
-        "tags": [
-          "Cycling routes - filtered"
-        ],
-        "summary": "Returns filtered list of cycling routes",
-        "consumes": [
-          "application/x-www-form-urlencoded"
-        ],
-        "parameters": [
-          {
-            "in": "formData",
+            "in": "path",
             "name": "minTemp",
             "type": "number",
-            "description": "Minimal temperature value in Celsius"
+            "description": "Minimal average temperature in Celsius degree"
           },
           {
-            "in": "formData",
-            "name": "maxHumidity",
+            "in": "path",
+            "name": "maxTemp",
             "type": "number",
-            "description": "Maximal humidity value in %"
+            "description": "Maximal average temperature in Celsius degree"
           }
         ],
         "responses": {
@@ -115,12 +73,6 @@
               "items": {
                 "$ref": "#/definitions/Route"
               }
-            }
-          },
-          "400": {
-            "description": "Bad request parameters - NaN",
-            "schema": {
-              "$ref": "#/definitions/ApiError"
             }
           },
           "500": {
@@ -171,6 +123,66 @@
             "schema": {
               "$ref": "#/definitions/ApiError"
             }
+          }
+        }
+      }
+    }
+  },
+  "/shortestPath/{lat}/{lon}/{mapPart}/{minTemp}/{maxTemp}": {
+    "get": {
+      "tags": [
+        "Cycling routes - all"
+      ],
+      "summary": "Returns all cycling routes",
+      "produces": [
+        "application/json"
+      ],
+      "parameters": [
+        {
+          "in": "path",
+          "name": "lat",
+          "description": "Geo Latitude",
+          "type": "number"
+        },
+        {
+          "in": "path",
+          "name": "lon",
+          "description": "Geo Longitude",
+          "type": "number"
+        },
+        {
+          "in": "path",
+          "name": "region",
+          "type": "string",
+          "description": "Region of Slovakia country"
+        },
+        {
+          "in": "path",
+          "name": "minTemp",
+          "type": "number",
+          "description": "Minimal average temperature in Celsius degree"
+        },
+        {
+          "in": "path",
+          "name": "maxTemp",
+          "type": "number",
+          "description": "Maximal average temperature in Celsius degree"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Success",
+          "schema": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Route"
+            }
+          }
+        },
+        "500": {
+          "description": "Internal server error occured",
+          "schema": {
+            "$ref": "#/definitions/ApiError"
           }
         }
       }
