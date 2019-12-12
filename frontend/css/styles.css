@@ -87,6 +87,13 @@ body {
     display: inline-block;
 }
 
+#legend-trigger {
+    position: absolute;
+    bottom: 15px;
+    right: 5%;
+    z-index: 5;
+}
+
 .marker-start {
     width: 15px;
     height: 15px;

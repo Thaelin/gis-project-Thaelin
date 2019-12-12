@@ -10,6 +10,11 @@ var lineId = 0;
 var displayedRoutes = [];
 var displayedMarkers = [];
 var mapParts = [];
+var actualDataFilters = {
+    part: 'Slovensko',
+    minTemp: 18.0,
+    maxTemp: 30.0
+}
 
 function formatDate(date) {
     var d = new Date(date),
@@ -220,10 +225,11 @@ function shortestPath() {
             map.removeLayer(shortestPathLayerId);
         }
 
-        debugger
-
-        filterRoutes(part, minTemp, maxTemp);
-
+        // Apply filter if filter changed meanwhile
+        if (filterChanged(part, minTemp, maxTemp)) {
+            filterRoutes(part, minTemp, maxTemp);
+        }
+        
         $.get('/api/shortestPath/'+position.lat+'/'+position.lon+'/'+part+'/'+minTemp+'/'+maxTemp, data => {
             $('#loading').hide();
             enableInputs();
@@ -236,6 +242,15 @@ function shortestPath() {
         });
     }
     
+}
+
+function filterChanged(part, minTemp, maxTemp) {
+    if (actualDataFilters.part !== part || actualDataFilters.minTemp !== minTemp || actualDataFilters.maxTemp !== maxTemp) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 function validateTempInputs(minTemp, maxTemp) {
@@ -274,6 +289,9 @@ function filterRoutes(partName, minTemp, maxTemp) {
     $.get('/api/cyclingRoutesFilter/' + partName + '/' + minTemp + '/' + maxTemp, data => {
         displayMapPartSelection();
         loadMapData(data);
+        actualDataFilters.part = partName;
+        actualDataFilters.minTemp = minTemp;
+        actualDataFilters.maxTemp = maxTemp;
         enableInputs();
     });
     
@@ -298,11 +316,13 @@ function clearDisplayedRoutes() {
 
 function blockInputs() {
     $('#parts').prop('disabled', true);
+    $('#filter-button').prop('disabled', true);
     $('#shortest-path-button').prop('disabled', true);
 }
 
 function enableInputs() {
     $('#parts').prop('disabled', false);
+    $('#filter-button').prop('disabled', false);
     $('#shortest-path-button').prop('disabled', false);
 }
 

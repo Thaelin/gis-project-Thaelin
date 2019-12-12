@@ -7,28 +7,27 @@ $(document).ready(function() {
     initializeInputs();
 
     map.on('load', function() {
-        // load cycling routes
-        $.get('/api/cyclingRoutes', data => {
-            loadMapData(data);
 
-            // Add a single point to the map - draggable marker
-            map.addSource('point', {
-                "type": "geojson",
-                "data": geojson
-            });
-                
-            map.addLayer({
-                "id": "point",
-                "type": "circle",
-                "source": "point",
-                "paint": {
-                    "circle-radius": 8,
-                    "circle-color": "#3887be"
-                }
-            });
+        // Add a single point to the map - draggable marker
+        map.addSource('point', {
+            "type": "geojson",
+            "data": geojson
         });
+            
+        map.addLayer({
+            "id": "point",
+            "type": "circle",
+            "source": "point",
+            "paint": {
+                "circle-radius": 8,
+                "circle-color": "#3887be"
+            }
+        });
+
+        // Initial filter
+        filter();
         
-            // When the cursor enters a feature in the point layer, prepare for dragging.
+        // When the cursor enters a feature in the point layer, prepare for dragging.
         map.on('mouseenter', 'point', function() {
             map.setPaintProperty('point', 'circle-color', '#3bb2d0');
             canvas.style.cursor = 'move';

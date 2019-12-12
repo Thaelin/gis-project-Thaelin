@@ -35,22 +35,44 @@
                 </div>
             </div>
             <div class="center">
-                <button onclick="filter()" type="button" id="shortest-path-button" class="btn btn-primary control-panel-button">Filter</button>
+                <button onclick="filter()" type="button" id="filter-button" class="btn btn-secondary control-panel-button">Filter</button>
             </div>
             <span class="control-panel-span">Shortest path from your point: </span>
             <div class="center">
-                <button onclick="shortestPath()" type="button" id="shortest-path-button" class="btn btn-primary control-panel-button">Find path</button>
+                <button onclick="shortestPath()" type="button" id="shortest-path-button" class="btn btn-secondary control-panel-button">Find path</button>
             </div>
-            <span class="control-panel-span">Legend: </span>
-            <section id="legend">
-                <div class="marker-start"></div><span>Start route point</span>
-                <div class="marker-weather"></div><span>Intermediate route point</span>
-                <div class="marker-finish"></div><span>Finish route point</span>
-                <div class="marker-position"></div><span>Selected position</span>
-            </section>
+            
+            
         </div>
+        <!-- Button trigger modal -->
+        <button id="legend-trigger" type="button" class="btn btn-secondary" data-toggle="modal" data-target="#exampleModal">
+            Map legend
+        </button>
         <div id="map"></div>
         <!-- <pre id='coordinates' class='coordinates'></pre> -->
+
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel"><span class="control-panel-span">Legend: </span></h5>
+                </div>
+                <div class="modal-body">
+                    
+                    <section id="legend">
+                        <div class="marker-start"></div><span>Start route point</span>
+                        <div class="marker-weather"></div><span>Intermediate route point</span>
+                        <div class="marker-finish"></div><span>Finish route point</span>
+                        <div class="marker-position"></div><span>Selected position</span>
+                    </section>
+                </div>
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+            </div>
+        </div>
         
         
         <script src="libs/mapbox/mapbox-gl.js"></script>
