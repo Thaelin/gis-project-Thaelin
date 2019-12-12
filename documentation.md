@@ -41,17 +41,20 @@ The backend application powered by Node.js and is responsible for:
 * continually gathering weather data relevant to saved routes data
 * serving static files
 * serving API
-* communication with Postgres database
+* communication with PostgreSQL database
 * serving API documentation
 * logging application events into log files
 
 ## Data
 ### Cycling routes data
 Cycling routes data are imported via an *bash* script that uses *ogr2ogr* tool for importing gpx formated data into POSTGIS database. Before import, script runs DDL commands that create required tables. DDL file is stored in (`backend/data_definition/ddl.sql`). Import script consists of bash file (`backend/data_import/import.sh`) and 2 supporting SQL scripts (`backend/data_import/import1.sql`) and (`backend/data_import/import2.sql`).
-### Weather data
-Weather data is obtained from *OpenWeatherMap API*. Count of weather query points for 1 route depends on route's length. Routes with length < 30km are queried only for their starting and finishing points. Routes with length >= 30km and < 100km are queried for starting, finishing points and for middle route point. Routes longer than 100km are queried for start, first quarter, middle, third quarter and finish points. 
+### Route topology data
+For finding the shortest path from the selected position to nearest cycling route path start, an application needed a route topology that can be provided into Pgrouting extension's Djikstra algorithm. Therefore I used an external tool that can create and populate a topology data table based on .osm input. I stored the data into table named `route_topology`.
 
-*Gathering script* runs every X miliseconds - acording to configuration value stored in (`backend/config.json`). It queries every route for actual weather data and stores it into database. 
+### Weather data
+Weather data is obtained from *OpenWeatherMap API*. Count of weather query points for 1 route depends on route's length. Routes with length < 30km are queried only for their starting and finishing points. Routes with length >= 30km and < 100km are queried for starting, finishing points and for middle route point. Routes longer than 100km are queried for start, first quarter, middle, third quarter and finish points.
+
+*Gathering script* runs every X miliseconds - acording to configuration value stored in (`backend/config.json`). It queries every route for actual weather data and stores it into the table `weather_data`.
 
 ## Api
 *API* is documented interactively through Swagger. When application runs, its interactive docs are accessible via URL: (`localhost:3000/api-docs`). There you can check all parameters needed and response value formats. You can also execute API calls from there as well. 
@@ -79,30 +82,6 @@ Weather data is obtained from *OpenWeatherMap API*. Count of weather query point
   }
 ]
 
-**POST: cyclingRoutes/length**
-
-**Description:** get cycling routes filtered by route length in km
-
-**Parameters:** 
-
-  * minLength
-  * maxLength
- 
-**Response format:**
-[
-  {
-    "fid": 0,
-    "name": "string",
-    "route": [
-      {
-        "lat": 0,
-        "lon": 0
-      }
-    ],
-    "length": 0
-  }
-]
-
 **POST: cyclingRoutes/weather**
 
 **Description:** get cycling routes filtered by temperature and humidity
@@ -110,7 +89,7 @@ Weather data is obtained from *OpenWeatherMap API*. Count of weather query point
 **Parameters:**
 
   * minTemp
-  * maxHumidity
+  * maxTemp
 
 **Response format:**
 [
@@ -215,3 +194,13 @@ WHERE fid = $1
 "Index Scan using cycling_routes_pkey on cycling_routes  (cost=0.14..21.68 rows=1 width=172)"
 "  Index Cond: (fid = 12)"
 ```
+
+# Instalation
+1. Install node.js
+```
+sudo apt-get install curl
+curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+sudo apt-get install nodejs
+```
+2. Install PostgreSQL database.
+3. Clone `https://github.com/fiit-pdt-2019/gis-project-Thaelin` repo.
