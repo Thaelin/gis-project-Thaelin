@@ -154,6 +154,66 @@ WHERE cr.fid IN (
 AND ST_Contains(kraj.geo, ST_StartPoint(ST_LineMerge(cr.route)))
 ```
 
+**Querying shortest path from selected position to nearest cycling route**
+
+This query is used for the second main Use case of the application. It find the shortest path from selected position to nearest cycling route. The most important part of the query is the `pgr_dijkstra` part where the actual shortest path from point A to B is computed. Point A is in our case selected position and point B is the start of the nearest cycling route that conforms the region and temperature conditions.
+
+```SQL
+WITH closest AS(
+  WITH kraj AS (
+      SELECT ST_Transform(way, 4326) geo
+      FROM planet_osm_polygon
+      WHERE admin_level IN('2','4') AND name = $3
+      LIMIT 1
+  )
+  SELECT ST_StartPoint(ST_LineMerge(route)) sp
+  FROM cycling_routes cr
+  CROSS JOIN kraj
+  WHERE cr.fid IN (
+      SELECT cycling_route_id FROM (
+          SELECT cycling_route_id, point_type, weather, measure_date, 
+          rank() OVER (
+              PARTITION BY point_type, cycling_route_id ORDER BY measure_date DESC
+          ) 
+          FROM cycling_routes_weather
+      ) weather
+      WHERE rank = 1
+      GROUP BY cycling_route_id
+      HAVING AVG((weather).temperature) >= $4 AND AVG((weather).temperature) <= $5
+  )
+  AND ST_Contains(kraj.geo, ST_StartPoint(ST_LineMerge(cr.route)))
+  ORDER BY ST_Distance(
+      ST_StartPoint(ST_LineMerge(cr.route)),
+      ST_SetSRID(ST_MakePoint($1, $2), 4326)
+  ) ASC
+  LIMIT 1
+)
+SELECT ST_AsGeoJSON(ST_Union(st_transform(geom_way::geometry, 4326))) geo
+FROM pgr_dijkstra(
+ 'SELECT id, source, target, cost, reverse_cost FROM route_topology',
+(
+  SELECT source 
+  FROM route_topology
+  ORDER BY ST_Distance(
+      ST_StartPoint(ST_Transform(geom_way, 4326)),
+      ST_SetSRID(ST_MakePoint($1, $2), 4326), true
+  ) ASC
+  LIMIT 1
+),
+(
+  SELECT source 
+  FROM route_topology
+  CROSS JOIN closest
+  ORDER BY ST_Distance(
+      ST_StartPoint(ST_Transform(geom_way, 4326)),
+      closest.sp, true
+  ) ASC
+  LIMIT 1
+)
+) as pt
+JOIN route_topology rd ON pt.edge = rd.id
+```
+
 **Querying milestones of specific cycling route**
 
 This query is used to select checkpoints for specific route. It creates Point types from Line type by interpolation - `ST_Line_Interpolate_Point` and other functions. Function also returns the length of whole cycling route by using `ST_Length` function.
