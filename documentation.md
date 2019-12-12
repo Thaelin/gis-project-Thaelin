@@ -9,7 +9,7 @@ Application works with cycling routes data on the map and it's most important fe
 
 This is it in action:
 
-![Screenshot 1](./doc_images/1.png?raw=true)
+![Screenshot 1](./doc-images/1.png?raw=true)
 
 ![Screenshot 2](http://i64.tinypic.com/33oslqr.png)
 
