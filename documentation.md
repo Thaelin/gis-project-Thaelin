@@ -243,7 +243,7 @@ WITH (FILLFACTOR=100);
 Minor optimisation reduced the query execution time by **6.77 %**.
 
 
-**Querying shortest path from selected position to nearest cycling route**
+### Querying shortest path from selected position to nearest cycling route
 
 This query is used for the second main Use case of the application. It find the shortest path from selected position to nearest cycling route. The most important part of the query is the `pgr_dijkstra` part where the actual shortest path from point A to B is computed. Point A is in our case selected position and point B is the start of the nearest cycling route that conforms the region and temperature conditions.
 
@@ -305,12 +305,12 @@ FROM pgr_dijkstra(
 JOIN route_topology rd ON pt.edge = rd.id
 ```
 
-Example result
+**Example result**
 ```
 "{"type":"MultiLineString","coordinates":[[[17.0878121,48.1301822],[17.0864193,48.1296253],[17.0840847,48.1286655],[17.0833931,48.1284088],[17.0831136,48.1283115],[17.0829083,48.1282494],[17.0825894,48.1281606]],[[17.0825894,48.1281606],[17.0818622,48.12802 (...)"
 ```
 
-Analyze
+**Analyze**
 ```
 "Aggregate  (cost=128300.80..128303.31 rows=1 width=32) (actual time=3634.010..3634.010 rows=1 loops=1)"
 "  CTE closest"
@@ -370,7 +370,7 @@ Analyze
 
 ```
 
-**Querying milestones of specific cycling route**
+### Querying milestones of specific cycling route
 
 This query is used to select checkpoints for specific route. It creates Point types from Line type by interpolation - `ST_Line_Interpolate_Point` and other functions. Function also returns the length of whole cycling route by using `ST_Length` function.
 
@@ -388,12 +388,12 @@ FROM cycling_routes
 WHERE fid = 10
 ```
 
-Example result
+**Example result**
 ```
 10;166.256255642543;"{"type":"Point","coordinates":[17.793178986758,48.4294130187482]}";"{"type":"Point","coordinates":[17.8929706069304,48.7892133131268]}";"{"type":"Point","coordinates":[18.210459140606,49.0255235594301]}";"{"type":"Point","coordinates":[18.5119922443831,49.1996782265638]}";"{"type":"Point","coordinates":[18.8636630214751,49.1796110384166]}"
 ```
 
-Analyze
+**Analyze**
 ```
 "Seq Scan on cycling_routes  (cost=0.00..17.72 rows=1 width=172) (actual time=17.705..17.717 rows=1 loops=1)"
 "  Filter: (fid = 10)"
@@ -402,7 +402,7 @@ Analyze
 "Execution time: 17.777 ms"
 ```
 
-**Querying most actual weather data of cycling route**
+### Querying most actual weather data of cycling route
 
 This query is used for selecting most actual weather data of a specific route. Interesting thing is, that we defined own composite data type to store weather data. More information about this in installation section - DDL.
 
@@ -418,7 +418,7 @@ SELECT point_type, weather, measure_date FROM (
 WHERE rank = 1
 ```
 
-Example result
+**Example result**
 ```
 "FINISH";"(0.36,86,1007,13d,"light snow",1)";"2019-12-12 14:43:06.958"
 "FIRSTQUARTER";"(1.3,99,1007,10d,"light rain",1)";"2019-12-12 14:43:06.99"
@@ -427,7 +427,7 @@ Example result
 "THIRDQUARTER";"(0.87,86,1007,13d,"light snow",1)";"2019-12-12 14:43:07.978"
 ```
 
-Analyze
+**Analyze**
 ```
 "Subquery Scan on actual_weather  (cost=1953.43..2099.49 rows=22 width=68) (actual time=16.342..22.270 rows=5 loops=1)"
 "  Filter: (actual_weather.rank = 1)"
@@ -443,7 +443,39 @@ Analyze
 "Execution time: 22.332 ms"
 ```
 
-**Querying all available filtering regions and their center position**
+**Optimize**
+
+I see a Seq Scan on `cycling_routes_weather` table. We can change this easily to Index Scan by creating an index on `cycling_route_id` column. Index on `measure_date` in descending order can also be useful.
+
+```SQL
+CREATE INDEX ON cycling_routes_weather(cycling_route_id);
+
+CREATE INDEX ON cycling_routes_weather(measure_date DESC);
+```
+
+```
+"Subquery Scan on actual_weather  (cost=1566.79..1714.63 rows=23 width=68) (actual time=9.999..15.985 rows=5 loops=1)"
+"  Filter: (actual_weather.rank = 1)"
+"  Rows Removed by Filter: 4501"
+"  ->  WindowAgg  (cost=1566.79..1657.77 rows=4549 width=80) (actual time=9.997..15.598 rows=4506 loops=1)"
+"        ->  Sort  (cost=1566.79..1578.16 rows=4549 width=68) (actual time=9.983..10.722 rows=4506 loops=1)"
+"              Sort Key: cycling_routes_weather.point_type, cycling_routes_weather.measure_date DESC"
+"              Sort Method: quicksort  Memory: 826kB"
+"              ->  Bitmap Heap Scan on cycling_routes_weather  (cost=87.54..1290.41 rows=4549 width=68) (actual time=0.589..2.783 rows=4506 loops=1)"
+"                    Recheck Cond: (cycling_route_id = 10)"
+"                    Heap Blocks: exact=738"
+"                    ->  Bitmap Index Scan on cycling_routes_weather_cycling_route_id_idx  (cost=0.00..86.41 rows=4549 width=0) (actual time=0.402..0.402 rows=4506 loops=1)"
+"                          Index Cond: (cycling_route_id = 10)"
+"Planning time: 0.187 ms"
+"Execution time: 16.046 ms"
+```
+
+**Evaluation of optimisation**
+
+Optimisation reduced the query execution time by **28.15 %** on average.
+
+
+### Querying all available filtering regions and their center position
 
 This query is used in populating region select box and also in region filtering and map centering. Application uses region geodata to colorize selected region and center the map relative to selected region's position. `ST_Centroid` function returns the centroid point for every region row.
 
@@ -455,7 +487,7 @@ SELECT osm_id, name,
 WHERE admin_level = '4' OR name = 'Slovensko'
 ```
 
-Example result
+**Example result**
 ```
 -388265;"Bratislavský kraj";"{"type":"Polygon","coordinates":[[[16.8331891,48.3805240998456],[16.8332193,48.3802084998456],[16.8332914,48.3799262998457],[16.8334366,48.3796188998458],[16.8344514,48.3782181998461],[16.8374269,48.3749881998469],[16.8382026,48.374497999847],[16.8392309,4 (...)";"{"type":"Point","coordinates":[17.1789898492853,48.31800148271]}"
 -388266;"Trnavský kraj";"{"type":"Polygon","coordinates":[[[16.933595,48.6006259997913],[16.933599,48.6001909997914],[16.933633,48.5997359997915],[16.933687,48.5993429997916],[16.933809,48.5989349997917],[16.933974,48.5985149997919],[16.934186,48.598095999792],[16.93441,48.5977759 (...)";"{"type":"Point","coordinates":[17.5342221807029,48.355443952533]}"
@@ -463,7 +495,7 @@ Example result
 -388268;"Nitriansky kraj";"{"type":"Polygon","coordinates":[[[17.705419,47.7589849999945],[17.7055077,47.7588990999945],[17.707338,47.7573599999948],[17.708579,47.756677999995],[17.709914,47.7560819999951],[17.711332,47.7555799999952],[17.712816,47.7551749999953],[17.718313,47.75418 (...)";"{"type":"Point","coordinates":[18.3107233160792,48.1435965316258]}"
 ```
 
-Analyze
+**Analyze**
 ```
 "Bitmap Heap Scan on planet_osm_polygon  (cost=8.88..26.90 rows=2 width=90) (actual time=29.989..588.695 rows=9 loops=1)"
 "  Recheck Cond: ((admin_level = '4'::text) OR (name = 'Slovensko'::text))"
