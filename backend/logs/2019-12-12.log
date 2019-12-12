@@ -3710,3 +3710,6 @@
 {"name":"Smart cycling app logger","hostname":"Cmaa-Lenovo-G570","pid":5347,"level":30,"msg":"Weather data for track points were saved successfully, DB response: [object Object]","time":"2019-12-12T13:48:08.087Z","v":0}
 {"name":"Smart cycling app logger","hostname":"Cmaa-Lenovo-G570","pid":5347,"level":30,"msg":"Weather data for track points were saved successfully, DB response: [object Object]","time":"2019-12-12T13:48:08.087Z","v":0}
 {"name":"Smart cycling app logger","hostname":"Cmaa-Lenovo-G570","pid":5347,"level":30,"msg":"Weather data for track points were saved successfully, DB response: [object Object]","time":"2019-12-12T13:48:08.087Z","v":0}
+{"name":"Smart cycling app logger","hostname":"Cmaa-Lenovo-G570","pid":7038,"level":30,"msg":"Logger component has been initialized","time":"2019-12-12T15:10:35.155Z","v":0}
+{"name":"Smart cycling app logger","hostname":"Cmaa-Lenovo-G570","pid":7038,"level":30,"msg":"Swagger UI has been initialised. Live API doc available /api-docs URL","time":"2019-12-12T15:10:35.445Z","v":0}
+{"name":"Smart cycling app logger","hostname":"Cmaa-Lenovo-G570","pid":7038,"level":30,"msg":"PostgreSQL version is: PostgreSQL 10.11 (Ubuntu 10.11-1.pgdg18.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0, 64-bit","time":"2019-12-12T15:10:35.462Z","v":0}

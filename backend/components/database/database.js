@@ -160,7 +160,7 @@ class Database {
                 FROM route_topology
                 ORDER BY ST_Distance(
                     ST_StartPoint(ST_Transform(geom_way, 4326)),
-                    ST_SetSRID(ST_MakePoint($1, $2), 4326), true
+                    ST_SetSRID(ST_MakePoint($1, $2), 4326)
                 ) ASC
                 LIMIT 1
             ),
@@ -170,7 +170,7 @@ class Database {
                 CROSS JOIN closest
                 ORDER BY ST_Distance(
                     ST_StartPoint(ST_Transform(geom_way, 4326)),
-                    closest.sp, true
+                    closest.sp
                 ) ASC
                 LIMIT 1
             )
