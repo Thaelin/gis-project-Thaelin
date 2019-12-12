@@ -121,21 +121,7 @@ All database communication is stored in *Database component*. It is located in (
 - cycling_routes_weather table contained weather data for all cycling_routes with historic data and more data point types => that's why I needed to use window function to prefilter them
 
 
-
-**Getting cycling routes filtered by length range**
-
-```
-SELECT fid, name, ST_AsGeoJSON(ST_LineMerge(route)) AS route, ST_Length(route::geography)/1000 as length 
-FROM cycling_routes
-WHERE ST_Length(route::geography)/1000 BETWEEN $1 AND $2
-```
-*Explain*:
-```
-"Seq Scan on cycling_routes  (cost=0.00..123.01 rows=1 width=362)"
-"  Filter: (((st_length((route)::geography, true) / '1000'::double precision) >= '20'::double precision) AND ((st_length((route)::geography, true) / '1000'::double precision) <= '50'::double precision))"
-```
-
-**Getting cycling routes filtered by average temperature and region**
+**Querying cycling routes filtered by average temperature and region**
 
 This query covers first basic Use case. Showcase and filtering of cycling routes based on average temperature of all checkpoints and selected region. `WITH` part selects a row with region - there can be 2 types of administrative types - 4 for subregions and 2 for countries. We can select whole Slovakia region that's why we need to use this `OR` condition. 
 
@@ -143,7 +129,7 @@ Query selects only routes that pass `IN` condition - average temperature is in r
 
 This query simulates Use case when user wants to see cycling routes that belong to region "Nitriansky kraj" and their average temperature si between -2.4 to 30.0 Celsius degree.
 
-```
+```SQL
 WITH kraj AS (
     SELECT osm_id, name, 
     ST_Transform(way, 4326) geo
@@ -168,12 +154,12 @@ WHERE cr.fid IN (
 AND ST_Contains(kraj.geo, ST_StartPoint(ST_LineMerge(cr.route)))
 ```
 
-**Getting milestones of specific cycling route**
+**Querying milestones of specific cycling route**
 
 This query is used to select checkpoints for specific route. It creates Point types from Line type by interpolation - `ST_Line_Interpolate_Point` and other functions. Function also returns the length of whole cycling route by using `ST_Length` function.
 
 Example query returns interpolation points and length of the cycling route "Vážska cyklomagistrála".
-```
+```SQL
 SELECT 
     fid,
     ST_Length(route::geography)/1000 as length,
@@ -185,10 +171,17 @@ SELECT
 FROM cycling_routes
 WHERE fid = 10
 ```
-*Explain*:
-```
-"Index Scan using cycling_routes_pkey on cycling_routes  (cost=0.14..21.68 rows=1 width=172)"
-"  Index Cond: (fid = 12)"
+
+**Querying all available filtering regions and their center position
+
+This query is used in populating region select box and also in region filtering and map centering. Application uses region geodata to colorize selected region and center the map relative to selected region's position. `ST_Centroid` function returns the centroid point for every region row.
+
+```SQL
+SELECT osm_id, name, 
+  ST_AsGeoJSON(ST_Transform(way::geometry, 4326)) geo, 
+  ST_AsGeoJSON(ST_Transform(ST_Centroid(way::geometry), 4326)) center 
+  FROM planet_osm_polygon
+WHERE admin_level = '4' OR name = 'Slovensko'
 ```
 
 # Installation
