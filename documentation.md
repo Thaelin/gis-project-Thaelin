@@ -193,6 +193,7 @@ AND ST_Contains(kraj.geo, ST_StartPoint(ST_LineMerge(cr.route)))
 ```
 
 **Optimize**
+
 I saw that most of the computation time is in the `weather_data` aggregations. There is a sort condition based on average temperature. However, weather is a composite type and I tried many indices but none of these improved my solution. Only thing I managed to optimize was non critical part of the query - selecting startpoint of route data.
 
 ```SQL
@@ -238,8 +239,8 @@ WITH (FILLFACTOR=100);
 ```
 
 **Evaluation of optimisation**
-Minor optimisation reduced the query execution time by **6.77 %**.
 
+Minor optimisation reduced the query execution time by **6.77 %**.
 
 
 **Querying shortest path from selected position to nearest cycling route**
@@ -311,61 +312,61 @@ Example result
 
 Analyze
 ```
-"Aggregate  (cost=310617.33..310619.84 rows=1 width=32) (actual time=8911.148..8911.148 rows=1 loops=1)"
+"Aggregate  (cost=310635.49..310638.00 rows=1 width=32) (actual time=8729.134..8729.134 rows=1 loops=1)"
 "  CTE closest"
-"    ->  Limit  (cost=6394.25..6394.25 rows=1 width=40) (actual time=210.382..210.387 rows=1 loops=1)"
+"    ->  Limit  (cost=6412.41..6412.42 rows=1 width=40) (actual time=204.244..204.250 rows=1 loops=1)"
 "          CTE kraj"
-"            ->  Limit  (cost=0.43..12.47 rows=1 width=32) (actual time=2.557..2.559 rows=1 loops=1)"
-"                  ->  Index Scan using name on planet_osm_polygon  (cost=0.43..12.47 rows=1 width=32) (actual time=2.556..2.556 rows=1 loops=1)"
+"            ->  Limit  (cost=0.43..12.47 rows=1 width=32) (actual time=2.544..2.545 rows=1 loops=1)"
+"                  ->  Index Scan using name on planet_osm_polygon  (cost=0.43..12.47 rows=1 width=32) (actual time=2.543..2.544 rows=1 loops=1)"
 "                        Index Cond: (name = 'Bratislavský kraj'::text)"
 "                        Filter: ((admin_level = '4'::text) OR (admin_level = '2'::text))"
-"          ->  Sort  (cost=6381.78..6381.78 rows=1 width=40) (actual time=210.381..210.381 rows=1 loops=1)"
+"          ->  Sort  (cost=6399.94..6399.94 rows=1 width=40) (actual time=204.244..204.244 rows=1 loops=1)"
 "                Sort Key: (st_distance(st_startpoint(st_linemerge(cr.route)), '0101000020E61000000F9315681C973140062AE3DF673E4840'::geometry))"
 "                Sort Method: quicksort  Memory: 25kB"
-"                ->  Merge Join  (cost=6379.10..6381.77 rows=1 width=40) (actual time=210.373..210.375 rows=1 loops=1)"
+"                ->  Merge Join  (cost=6397.25..6399.93 rows=1 width=40) (actual time=204.235..204.237 rows=1 loops=1)"
 "                      Merge Cond: (cr.fid = weather.cycling_route_id)"
-"                      ->  Sort  (cost=8.55..8.55 rows=1 width=36) (actual time=12.173..12.174 rows=1 loops=1)"
+"                      ->  Sort  (cost=8.45..8.45 rows=1 width=36) (actual time=2.934..2.935 rows=1 loops=1)"
 "                            Sort Key: cr.fid"
 "                            Sort Method: quicksort  Memory: 25kB"
-"                            ->  Nested Loop  (cost=0.00..8.54 rows=1 width=36) (actual time=11.279..12.165 rows=1 loops=1)"
-"                                  Join Filter: ((kraj.geo ~ st_startpoint(st_linemerge(cr.route))) AND _st_contains(kraj.geo, st_startpoint(st_linemerge(cr.route))))"
-"                                  Rows Removed by Join Filter: 15"
-"                                  ->  CTE Scan on kraj  (cost=0.00..0.02 rows=1 width=32) (actual time=2.606..2.609 rows=1 loops=1)"
-"                                  ->  Seq Scan on cycling_routes cr  (cost=0.00..4.16 rows=16 width=36) (actual time=0.009..0.027 rows=16 loops=1)"
-"                      ->  GroupAggregate  (cost=6370.55..6372.93 rows=16 width=4) (actual time=197.790..197.813 rows=14 loops=1)"
+"                            ->  Nested Loop  (cost=0.13..8.44 rows=1 width=36) (actual time=2.924..2.927 rows=1 loops=1)"
+"                                  ->  CTE Scan on kraj  (cost=0.00..0.02 rows=1 width=32) (actual time=2.585..2.586 rows=1 loops=1)"
+"                                  ->  Index Scan using cycling_routes_st_startpoint_idx on cycling_routes cr  (cost=0.13..8.41 rows=1 width=36) (actual time=0.335..0.337 rows=1 loops=1)"
+"                                        Index Cond: (kraj.geo ~ st_startpoint(st_linemerge(route)))"
+"                                        Filter: _st_contains(kraj.geo, st_startpoint(st_linemerge(route)))"
+"                      ->  GroupAggregate  (cost=6388.80..6391.19 rows=16 width=4) (actual time=200.883..200.906 rows=14 loops=1)"
 "                            Group Key: weather.cycling_route_id"
 "                            Filter: ((avg((weather.weather).temperature) >= '-4.2'::double precision) AND (avg((weather.weather).temperature) <= '30'::double precision))"
-"                            ->  Sort  (cost=6370.55..6371.08 rows=214 width=57) (actual time=197.775..197.779 rows=44 loops=1)"
+"                            ->  Sort  (cost=6388.80..6389.34 rows=215 width=57) (actual time=200.865..200.869 rows=44 loops=1)"
 "                                  Sort Key: weather.cycling_route_id"
 "                                  Sort Method: quicksort  Memory: 31kB"
-"                                  ->  Subquery Scan on weather  (cost=4864.86..6362.26 rows=214 width=57) (actual time=136.715..197.736 rows=47 loops=1)"
+"                                  ->  Subquery Scan on weather  (cost=4878.13..6380.47 rows=215 width=57) (actual time=138.869..200.824 rows=47 loops=1)"
 "                                        Filter: (weather.rank = 1)"
-"                                        Rows Removed by Filter: 42783"
-"                                        ->  WindowAgg  (cost=4864.86..5827.48 rows=42783 width=80) (actual time=136.713..193.950 rows=42830 loops=1)"
-"                                              ->  Sort  (cost=4864.86..4971.82 rows=42783 width=72) (actual time=136.701..147.945 rows=42830 loops=1)"
+"                                        Rows Removed by Filter: 42877"
+"                                        ->  WindowAgg  (cost=4878.13..5843.92 rows=42924 width=80) (actual time=138.867..196.938 rows=42924 loops=1)"
+"                                              ->  Sort  (cost=4878.13..4985.44 rows=42924 width=72) (actual time=138.852..149.972 rows=42924 loops=1)"
 "                                                    Sort Key: cycling_routes_weather.point_type, cycling_routes_weather.cycling_route_id, cycling_routes_weather.measure_date DESC"
-"                                                    Sort Method: external merge  Disk: 3728kB"
-"                                                    ->  Seq Scan on cycling_routes_weather  (cost=0.00..1573.83 rows=42783 width=72) (actual time=0.012..10.367 rows=42830 loops=1)"
-"  InitPlan 3 (returns $2)"
-"    ->  Limit  (cost=145518.57..145518.57 rows=1 width=12) (actual time=3285.209..3285.211 rows=1 loops=1)"
-"          ->  Sort  (cost=145518.57..146710.30 rows=476692 width=12) (actual time=3285.207..3285.207 rows=1 loops=1)"
+"                                                    Sort Method: external merge  Disk: 3744kB"
+"                                                    ->  Seq Scan on cycling_routes_weather  (cost=0.00..1575.24 rows=42924 width=72) (actual time=0.011..10.896 rows=42924 loops=1)"
+"  InitPlan 3 (returns $3)"
+"    ->  Limit  (cost=145518.57..145518.57 rows=1 width=12) (actual time=3287.552..3287.553 rows=1 loops=1)"
+"          ->  Sort  (cost=145518.57..146710.30 rows=476692 width=12) (actual time=3287.550..3287.550 rows=1 loops=1)"
 "                Sort Key: (_st_distance((st_startpoint(st_transform(route_topology.geom_way, 4326)))::geography, '0101000020E61000000F9315681C973140062AE3DF673E4840'::geography, '0'::double precision, true))"
 "                Sort Method: top-N heapsort  Memory: 25kB"
-"                ->  Seq Scan on route_topology  (cost=0.00..143135.11 rows=476692 width=12) (actual time=0.447..3104.227 rows=476692 loops=1)"
-"  InitPlan 4 (returns $3)"
-"    ->  Limit  (cost=151477.24..151477.24 rows=1 width=12) (actual time=3912.027..3912.028 rows=1 loops=1)"
-"          ->  Sort  (cost=151477.24..152668.97 rows=476692 width=12) (actual time=3912.026..3912.026 rows=1 loops=1)"
+"                ->  Seq Scan on route_topology  (cost=0.00..143135.11 rows=476692 width=12) (actual time=0.310..3107.705 rows=476692 loops=1)"
+"  InitPlan 4 (returns $4)"
+"    ->  Limit  (cost=151477.24..151477.24 rows=1 width=12) (actual time=3758.340..3758.341 rows=1 loops=1)"
+"          ->  Sort  (cost=151477.24..152668.97 rows=476692 width=12) (actual time=3758.340..3758.340 rows=1 loops=1)"
 "                Sort Key: (_st_distance((st_startpoint(st_transform(route_topology_1.geom_way, 4326)))::geography, (closest.sp)::geography, '0'::double precision, true))"
 "                Sort Method: top-N heapsort  Memory: 25kB"
-"                ->  Nested Loop  (cost=0.00..149093.78 rows=476692 width=12) (actual time=210.707..3721.477 rows=476692 loops=1)"
-"                      ->  CTE Scan on closest  (cost=0.00..0.02 rows=1 width=32) (actual time=210.385..210.392 rows=1 loops=1)"
-"                      ->  Seq Scan on route_topology route_topology_1  (cost=0.00..20386.92 rows=476692 width=112) (actual time=0.053..162.647 rows=476692 loops=1)"
-"  ->  Nested Loop  (cost=0.68..7222.26 rows=1000 width=108) (actual time=8891.450..8892.175 rows=167 loops=1)"
-"        ->  Function Scan on pgr_dijkstra pt  (cost=0.26..10.26 rows=1000 width=8) (actual time=8891.418..8891.442 rows=168 loops=1)"
+"                ->  Nested Loop  (cost=0.00..149093.78 rows=476692 width=12) (actual time=204.582..3572.610 rows=476692 loops=1)"
+"                      ->  CTE Scan on closest  (cost=0.00..0.02 rows=1 width=32) (actual time=204.248..204.255 rows=1 loops=1)"
+"                      ->  Seq Scan on route_topology route_topology_1  (cost=0.00..20386.92 rows=476692 width=112) (actual time=0.059..156.164 rows=476692 loops=1)"
+"  ->  Nested Loop  (cost=0.68..7222.26 rows=1000 width=108) (actual time=8709.324..8710.051 rows=167 loops=1)"
+"        ->  Function Scan on pgr_dijkstra pt  (cost=0.26..10.26 rows=1000 width=8) (actual time=8709.293..8709.317 rows=168 loops=1)"
 "        ->  Index Scan using pkey_hh_2po_4pgr on route_topology rd  (cost=0.42..7.21 rows=1 width=112) (actual time=0.004..0.004 rows=1 loops=168)"
 "              Index Cond: (id = pt.edge)"
-"Planning time: 1.897 ms"
-"Execution time: 8912.442 ms"
+"Planning time: 1.125 ms"
+"Execution time: 8730.317 ms"
 ```
 
 **Querying milestones of specific cycling route**
