@@ -120,16 +120,8 @@ All database communication is stored in *Database component*. It is located in (
 - Ogr2ogr tool caused my lines to be of type MultiLineString => I needed to use ST_LineMerge everytime I wanted to use simple LineString methods.
 - cycling_routes_weather table contained weather data for all cycling_routes with historic data and more data point types => that's why I needed to use window function to prefilter them
 
-**Getting all cycling routes**
 
-```
-SELECT fid, name, ST_AsGeoJSON(ST_LineMerge(route)) AS route, ST_Length(route::geography)/1000 as length 
-FROM cycling_routes;
-```
-*Explain*:
-```
-"Seq Scan on cycling_routes  (cost=0.00..591.17 rows=210 width=362)"
-```
+
 **Getting cycling routes filtered by length range**
 
 ```
@@ -182,7 +174,9 @@ WHERE avg_temperature >= $1 AND avg_humidity <= $2
 "                                            ->  Seq Scan on cycling_routes_weather  (cost=0.00..374.75 rows=11375 width=71)"
 ```
 **Getting milestones of specific cycling route**
+This query is used to select checkpoints for specific route. It creates Point types from Line type by interpolation - `ST_Line_Interpolate_Point` and other functions. Function also returns the length of whole cycling route by using `ST_Length` function.
 
+Example query returns interpolation points and length of the cycling route "Vážska cyklomagistrála".
 ```
 SELECT 
     fid,
@@ -193,7 +187,7 @@ SELECT
     ST_AsGeoJSON(ST_Line_Interpolate_Point(ST_LineMerge(route), 0.75)) AS route_third_quarter,
     ST_AsGeoJSON(ST_EndPoint(ST_LineMerge(route))) AS route_finish
 FROM cycling_routes
-WHERE fid = $1
+WHERE fid = 10
 ```
 *Explain*:
 ```
