@@ -172,7 +172,23 @@ FROM cycling_routes
 WHERE fid = 10
 ```
 
-**Querying all available filtering regions and their center position
+**Querying most actual weather data of cycling route**
+
+This query is used for selecting most actual weather data of a specific route. Interesting thing is, that we defined own composite data type to store weather data. More information about this in installation section - DDL.
+
+```SQL
+SELECT point_type, weather, measure_date FROM (
+    SELECT id, point_type, weather, measure_date, 
+    rank() OVER (
+        PARTITION BY point_type ORDER BY measure_date DESC
+    ) 
+    FROM cycling_routes_weather
+    WHERE cycling_route_id = 10
+) actual_weather
+WHERE rank = 1
+```
+
+**Querying all available filtering regions and their center position**
 
 This query is used in populating region select box and also in region filtering and map centering. Application uses region geodata to colorize selected region and center the map relative to selected region's position. `ST_Centroid` function returns the centroid point for every region row.
 
