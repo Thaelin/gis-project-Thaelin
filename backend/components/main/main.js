@@ -141,7 +141,7 @@ class Main {
             });
 
             this.app.get('/api/cyclingRoutesFilter/:region/:minTemp/:maxTemp', (req, res) => {
-                if (req.params.region && req.params.minTemp && req.params.maxTemp) {
+                if (req.params.route && req.params.minTemp && req.params.maxTemp) {
                     this.db.cyclingRoutesFiltered(
                         req.params.region, req.params.minTemp, req.params.maxTemp, 
                         (error, data) => {
@@ -153,10 +153,10 @@ class Main {
                                 let parsedData = [];
 
                                 // parse data to JSON
-                                data.rows.forEach((region) => {
+                                data.rows.forEach((route) => {
                                     parsedData.push({
-                                        fid: region.fid,
-                                        name: region.name,
+                                        fid: route.fid,
+                                        name: route.name,
                                         route: JSON.parse(route.route),
                                         length: route.length
                                     });
