@@ -73,7 +73,7 @@ I used OSM data to select Slovakia's administrative regions. This data is used f
 *API* is documented interactively through Swagger. When application runs, its interactive docs are accessible via URL: (`localhost:3000/api-docs`). There you can check all parameters needed and response value formats. You can also execute API calls from there as well. 
 
 ### Api methods
-1. **GET: /getMapParts**
+**GET: /getMapParts**
 
 **Description:** get all Slovakia regions
 
@@ -82,7 +82,8 @@ I used OSM data to select Slovakia's administrative regions. This data is used f
 **Response format:**
 application/json
 
-2. **GET: /cyclingRoutesFilter/{region}/{minTemp}/{maxTemp}**
+
+**GET: /cyclingRoutesFilter/{region}/{minTemp}/{maxTemp}**
 
 **Description:** returns cycling routes filtered by region and minimal and maximal average temperature
 
@@ -94,7 +95,8 @@ application/json
 **Response format:**
 application/json
 
-3. **GET: /weatherPoints/{routeId}**
+
+**GET: /weatherPoints/{routeId}**
 
 **Description:** returns weather data points with actual weather for specific route
 
@@ -104,7 +106,8 @@ application/json
 **Response format:**
 application/json
 
-4. **GET: /shortestPath/{lat}/{lon}/{region}/{minTemp}/{maxTemp}**
+
+**GET: /shortestPath/{lat}/{lon}/{region}/{minTemp}/{maxTemp}**
 
 **Description:** returns shortest path from selected position to nearest filtered cycling route start point
 
