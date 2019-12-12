@@ -54,6 +54,13 @@ Cycling routes data are imported via an *bash* script that uses *ogr2ogr* tool f
 ### Route topology data
 For finding the shortest path from the selected position to nearest cycling route path start, an application needed a route topology that can be provided into Pgrouting extension's Djikstra algorithm. Therefore I used an external tool that can create and populate a topology data table based on .osm input. I stored the data into table named `route_topology`.
 
+Tool is names osm2po and is written in Java. I fed it with osm data and it created an SQL script that creates a topology table with data.
+```
+java -Xmx1g -jar osm2po-core-5.2.43-signed.jar prefix=route_topology tileSize=x Slovakia.osm.pbf postp.0.class=de.cm.osm2po.plugins.postp.PgRoutingWriter
+cd route_topology
+psql -U postgres -d pdt_geo < route_topology_2po_4pgr.sql
+```
+
 ### Weather data
 Weather data is obtained from *OpenWeatherMap API*. Count of weather query points for 1 route depends on route's length. Routes with length < 30km are queried only for their starting and finishing points. Routes with length >= 30km and < 100km are queried for starting, finishing points and for middle route point. Routes longer than 100km are queried for start, first quarter, middle, third quarter and finish points.
 
@@ -509,18 +516,31 @@ WHERE admin_level = '4' OR name = 'Slovensko'
 "Execution time: 588.761 ms"
 ```
 
-
-# Installation
-1. Install node.js
+# Dependencies
+1. Node.js
 ```
 sudo apt-get install curl
 curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
 sudo apt-get install nodejs
 ```
-2. Clone `https://github.com/fiit-pdt-2019/gis-project-Thaelin` repo.
-3. Navigate into `/backend` folder in the cloned repository and install dependencies.
+2. PostgreSQL 10
+3. Postgis and Pgrouting extensions
+
+# Installation
+1. Clone `https://github.com/fiit-pdt-2019/gis-project-Thaelin` repo.
+2. Navigate into `/backend` folder in the cloned repository and install dependencies.
 ```
 npm install
 ```
-4. Install PostgreSQL database.
-5. 
+4. Extract data zip in `/backend/data_import/pg_dump.zip`.
+5. Import data from dump into your database.
+```SQL
+cd gis-project-Thaelin/backend/data_import
+psql -v ON_ERROR_STOP=1 -U postgres -d pdt_geo < pg_dump.sql
+```
+6. Run the app.
+```
+cd gis-project-Thaelin/backend
+node app.js
+```
+7. Open the app in the browser. Default URL is http://localhost:3000.
