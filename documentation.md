@@ -139,6 +139,10 @@ WHERE ST_Length(route::geography)/1000 BETWEEN $1 AND $2
 
 This query covers first basic Use case. Showcase and filtering of cycling routes based on average temperature of all checkpoints and selected region. `WITH` part selects a row with region - there can be 2 types of administrative types - 4 for subregions and 2 for countries. We can select whole Slovakia region that's why we need to use this `OR` condition. 
 
+Query selects only routes that pass `IN` condition - average temperature is in range specified by user's input. Next condition part is `AND ST_Contains` that ensures that query will return only cycling routes with start point inside selected region.
+
+This query simulates Use case when user wants to see cycling routes that belong to region "Nitriansky kraj" and their average temperature si between -2.4 to 30.0 Celsius degree.
+
 ```
 WITH kraj AS (
     SELECT osm_id, name, 
