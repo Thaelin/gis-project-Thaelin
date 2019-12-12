@@ -518,6 +518,22 @@ WHERE admin_level = '4' OR name = 'Slovensko'
 "Execution time: 588.761 ms"
 ```
 
+# Application logging
+
+Application logging is implemented with Bunyan library for Node.js. To view logs, you need to install bunyan with npm globally.
+
+```
+npm install -g bunyan
+```
+
+Logs are separated on daily basis. Format is: yyyy-mm-dd.log .
+Example: to show a log auditions from 12. 12. 2019 use this command
+```
+bunyan 2019-12-12.log
+```
+
+![Screenshot 7](./doc-images/logs.png?raw=true)
+
 # Data model of own tables
 
 ![Screenshot 6](./doc-images/db_design.png?raw=true)
