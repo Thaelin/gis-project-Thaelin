@@ -1,4 +1,17 @@
-# Overview
+# Contents
+
+1. Overview
+2. Frontend
+3. Backend
+4. Data
+5. Api
+6. Queries
+7. Application logging
+8. Data model of own tables
+9. Dependencies
+10. Installation
+
+# 1. Overview
 
 Application works with cycling routes data on the map and it's most important features are:
 
@@ -22,7 +35,7 @@ This is it in action:
 
 The application has 2 separate parts, the client which is a [frontend web application](#frontend) using mapbox API and mapbox.js and the [backend application](#backend) written in [Node.js](https://nodejs.org/en/), backed by PostGIS. The frontend application communicates with backend using an [API](#api). API is documented in interactive form with Swagger tool.
 
-# Frontend
+# 2. Frontend
 
 The frontend application consists of HTML page (`index.html`). HTML file are displaying showing cycling routes geodata on the map via JS Mapbox library. It also displays control panel.
 
@@ -36,7 +49,7 @@ The frontend application consists of HTML page (`index.html`). HTML file are dis
 
 *Weather icons* are obtained from *OpenWeatherMap repository*.
 
-# Backend
+# 3. Backend
 
 The backend application powered by Node.js and is responsible for:
 
@@ -48,10 +61,10 @@ The backend application powered by Node.js and is responsible for:
 * serving API documentation
 * logging application events into log files
 
-## Data
-### Cycling routes data
+# 4. Data
+## Cycling routes data
 Cycling routes data are imported via an *bash* script that uses *ogr2ogr* tool for importing gpx formated data into POSTGIS database. Before import, script runs DDL commands that create required tables. DDL file is stored in (`backend/data_definition/ddl.sql`). Import script consists of bash file (`backend/data_import/import.sh`) and 2 supporting SQL scripts (`backend/data_import/import1.sql`) and (`backend/data_import/import2.sql`).
-### Route topology data
+## Route topology data
 For finding the shortest path from the selected position to nearest cycling route path start, an application needed a route topology that can be provided into Pgrouting extension's Djikstra algorithm. Therefore I used an external tool that can create and populate a topology data table based on .osm input. I stored the data into table named `route_topology`.
 
 Tool is names osm2po and is written in Java. I fed it with osm data and it created an SQL script that creates a topology table with data.
@@ -61,18 +74,18 @@ cd route_topology
 psql -U postgres -d pdt_geo < route_topology_2po_4pgr.sql
 ```
 
-### Weather data
+## Weather data
 Weather data is obtained from *OpenWeatherMap API*. Count of weather query points for 1 route depends on route's length. Routes with length < 30km are queried only for their starting and finishing points. Routes with length >= 30km and < 100km are queried for starting, finishing points and for middle route point. Routes longer than 100km are queried for start, first quarter, middle, third quarter and finish points.
 
 *Gathering script* runs every X miliseconds - acording to configuration value stored in (`backend/config.json`). It queries every route for actual weather data and stores it into the table `weather_data`.
 
-### Open Street Maps data
+## Open Street Maps data
 I used OSM data to select Slovakia's administrative regions. This data is used for filtering and inclusion of other geo data, such as points or lines.
 
-## Api
+# 5. Api
 *API* is documented interactively through Swagger. When application runs, its interactive docs are accessible via URL: (`localhost:3000/api-docs`). There you can check all parameters needed and response value formats. You can also execute API calls from there as well. 
 
-### Api methods
+## Api methods
 **GET: /getMapParts**
 
 **Description:** get all Slovakia regions
@@ -121,7 +134,7 @@ application/json
 **Response format:**
 application/json
 
-## Queries
+# 6. Queries
 All database communication is stored in *Database component*. It is located in (`Backend/components/database/database.js`).
 
 **Notes**: 
@@ -129,7 +142,7 @@ All database communication is stored in *Database component*. It is located in (
 - cycling_routes_weather table contained weather data for all cycling_routes with historic data and more data point types => that's why I needed to use window function to prefilter them
 
 
-### Querying cycling routes filtered by average temperature and region
+## Querying cycling routes filtered by average temperature and region
 
 This query covers first basic Use case. Showcase and filtering of cycling routes based on average temperature of all checkpoints and selected region. `WITH` part selects a row with region - there can be 2 types of administrative types - 4 for subregions and 2 for countries. We can select whole Slovakia region that's why we need to use this `OR` condition. 
 
@@ -252,7 +265,7 @@ WITH (FILLFACTOR=100);
 Minor optimisation reduced the query execution time by **6.77 %**.
 
 
-### Querying shortest path from selected position to nearest cycling route
+## Querying shortest path from selected position to nearest cycling route
 
 This query is used for the second main Use case of the application. It find the shortest path from selected position to nearest cycling route. The most important part of the query is the `pgr_dijkstra` part where the actual shortest path from point A to B is computed. Point A is in our case selected position and point B is the start of the nearest cycling route that conforms the region and temperature conditions.
 
@@ -379,7 +392,7 @@ JOIN route_topology rd ON pt.edge = rd.id
 
 ```
 
-### Querying milestones of specific cycling route
+## Querying milestones of specific cycling route
 
 This query is used to select checkpoints for specific route. It creates Point types from Line type by interpolation - `ST_Line_Interpolate_Point` and other functions. Function also returns the length of whole cycling route by using `ST_Length` function.
 
@@ -411,7 +424,7 @@ WHERE fid = 10
 "Execution time: 17.777 ms"
 ```
 
-### Querying most actual weather data of cycling route
+## Querying most actual weather data of cycling route
 
 This query is used for selecting most actual weather data of a specific route. Interesting thing is, that we defined own composite data type to store weather data. More information about this in installation section - DDL.
 
@@ -484,7 +497,7 @@ CREATE INDEX ON cycling_routes_weather(measure_date DESC);
 Optimisation reduced the query execution time by **28.15 %** on average.
 
 
-### Querying all available filtering regions and their center position
+## Querying all available filtering regions and their center position
 
 This query is used in populating region select box and also in region filtering and map centering. Application uses region geodata to colorize selected region and center the map relative to selected region's position. `ST_Centroid` function returns the centroid point for every region row.
 
@@ -518,7 +531,7 @@ WHERE admin_level = '4' OR name = 'Slovensko'
 "Execution time: 588.761 ms"
 ```
 
-# Application logging
+# 7. Application logging
 
 Application logging is implemented with Bunyan library for Node.js. To view logs, you need to install bunyan with npm globally.
 
@@ -534,11 +547,11 @@ bunyan 2019-12-12.log
 
 ![Screenshot 7](./doc-images/logs.png?raw=true)
 
-# Data model of own tables
+# 8. Data model of own tables
 
 ![Screenshot 6](./doc-images/db_design.png?raw=true)
 
-# Dependencies
+# 9. Dependencies
 1. Node.js
 ```
 sudo apt-get install curl
@@ -548,7 +561,7 @@ sudo apt-get install nodejs
 2. PostgreSQL 10
 3. Postgis and Pgrouting extensions
 
-# Installation
+# 10. Installation
 1. Clone `https://github.com/fiit-pdt-2019/gis-project-Thaelin` repo.
 2. Navigate into `/backend` folder in the cloned repository and install dependencies.
 ```
