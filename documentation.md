@@ -71,53 +71,52 @@ I used OSM data to select Slovakia's administrative regions. This data is used f
 
 ## Api
 *API* is documented interactively through Swagger. When application runs, its interactive docs are accessible via URL: (`localhost:3000/api-docs`). There you can check all parameters needed and response value formats. You can also execute API calls from there as well. 
-![Screenshot 4](http://i65.tinypic.com/2zf5rep.png)
 
 ### Api methods
-**GET: /cyclingRoutes**
+**GET: /getMapParts**
 
-**Description:** get all cycling routes
+**Description:** get all Slovakia regions
 
 **Parameters:** none
 
 **Response format:**
-[
-  {
-    "fid": 0,
-    "name": "string",
-    "route": [
-      {
-        "lat": 0,
-        "lon": 0
-      }
-    ],
-    "length": 0
-  }
-]
+application/json
 
-**POST: cyclingRoutes/weather**
+**GET: /cyclingRoutesFilter/{region}/{minTemp}/{maxTemp}**
 
-**Description:** get cycling routes filtered by temperature and humidity
+**Description:** returns cycling routes filtered by region and minimal and maximal average temperature
 
-**Parameters:**
-
-  * minTemp
-  * maxTemp
+**Parameters:** 
+* region: string
+* minTemp: number
+* maxTemp: number
 
 **Response format:**
-[
-  {
-    "fid": 0,
-    "name": "string",
-    "route": [
-      {
-        "lat": 0,
-        "lon": 0
-      }
-    ],
-    "length": 0
-  }
-]
+application/json
+
+**GET: /weatherPoints/{routeId}**
+
+**Description:** returns weather data points with actual weather for specific route
+
+**Parameters:** 
+* routeId: number
+
+**Response format:**
+application/json
+
+**GET: /shortestPath/{lat}/{lon}/{region}/{minTemp}/{maxTemp}**
+
+**Description:** returns shortest path from selected position to nearest filtered cycling route start point
+
+**Parameters:** 
+* lat
+* lon
+* region: string
+* minTemp: number
+* maxTemp: number
+
+**Response format:**
+application/json
 
 ## Queries
 All database communication is stored in *Database component*. It is located in (`Backend/components/database/database.js`).
