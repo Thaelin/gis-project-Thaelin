@@ -42,31 +42,6 @@ class Main {
                 console.log(req.params);
                 res.sendFile(path.join(__dirname, '../../../frontend/index.html'));
             });
-            
-            // API route for getting all cycling routes
-            this.app.get('/api/cyclingRoutes', (req, res) => {
-                this.db.allCyclingRoutes((error, data) => {
-                    if (error) {
-                        this.logger.error(error);
-                        throw new Error;
-                    }
-                    else {
-                        let parsedData = [];
-
-                        // parse data to JSON
-                        data.rows.forEach((route) => {
-                            parsedData.push({
-                                fid: route.fid,
-                                name: route.name,
-                                route: JSON.parse(route.route),
-                                length: route.length
-                            });
-                        });
-
-                        res.json(parsedData);
-                    }
-                });
-            });
 
             // API route for getting specific route's weather points
             this.app.get('/api/weatherPoints/:routeId', (req, res) => {
@@ -131,31 +106,6 @@ class Main {
                         }
                     });
                 }
-            });
-
-            this.app.get('/api/test', (req, res) => {
-                this.db.testProjection((error, data) => {
-                    if (error) {
-                        this.logger.error(error);
-                        throw new Error;
-                    }
-                    else {
-                        res.json(data.rows);
-                    }
-                });
-                
-            });
-
-            this.app.get('/api/allRoads', (req, res) => {
-                this.db.getLoadedRoads((error, data) => {
-                    if (error) {
-                        this.logger.error(error);
-                        throw new Error;
-                    }
-                    else {
-                        res.json(data.rows);
-                    }
-                });
             });
 
             this.app.get('/api/shortestPath/:lat/:lon/:region/:minTemp/:maxTemp', (req, res) => {
