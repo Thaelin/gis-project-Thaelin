@@ -135,45 +135,37 @@ WHERE ST_Length(route::geography)/1000 BETWEEN $1 AND $2
 "  Filter: (((st_length((route)::geography, true) / '1000'::double precision) >= '20'::double precision) AND ((st_length((route)::geography, true) / '1000'::double precision) <= '50'::double precision))"
 ```
 
-**Getting cycling routes filtered by actual weather data (average route's temperature and humidity)**
+**Getting cycling routes filtered by average temperature and region**
+
+This query covers first basic Use case. Showcase and filtering of cycling routes based on average temperature of all checkpoints and selected region. `WITH` part selects a row with region - there can be 2 types of administrative types - 4 for subregions and 2 for countries. We can select whole Slovakia region that's why we need to use this `OR` condition. 
 
 ```
-SELECT fid, name, ST_AsGeoJSON(route) AS route, ST_Length(route::geography)/1000 as length FROM cycling_routes
-JOIN (
-    SELECT cycling_route_id, 
-    AVG((weather).temperature) AS avg_temperature, 
-    AVG((weather).humidity) AS avg_humidity FROM (
-        SELECT cycling_route_id, weather, 
+WITH kraj AS (
+    SELECT osm_id, name, 
+    ST_Transform(way, 4326) geo
+    FROM planet_osm_polygon
+    WHERE (admin_level = '4' AND name = "Nitriansky kraj") OR (admin_level = '2' AND name = "Nitriansky kraj")
+)
+SELECT cr.fid, cr.name, ST_AsGeoJSON(ST_LineMerge(cr.route)) AS route, ST_Length(cr.route::geography)/1000 as length 
+FROM cycling_routes cr
+CROSS JOIN kraj
+WHERE cr.fid IN (
+    SELECT cycling_route_id FROM (
+        SELECT cycling_route_id, point_type, weather, measure_date, 
         rank() OVER (
             PARTITION BY point_type, cycling_route_id ORDER BY measure_date DESC
         ) 
         FROM cycling_routes_weather
-    ) actual_weather
+    ) weather
     WHERE rank = 1
     GROUP BY cycling_route_id
-) temp ON fid = cycling_route_id
-WHERE avg_temperature >= $1 AND avg_humidity <= $2
+    HAVING AVG((weather).temperature) >= -2.4 AND AVG((weather).temperature) <= 30.0
+)
+AND ST_Contains(kraj.geo, ST_StartPoint(ST_LineMerge(cr.route)))
 ```
-*Explain*:
-```
-"Hash Join  (cost=1542.02..1598.76 rows=16 width=362)"
-"  Hash Cond: (cycling_routes.fid = temp.cycling_route_id)"
-"  ->  Seq Scan on cycling_routes  (cost=0.00..12.10 rows=210 width=354)"
-"  ->  Hash  (cost=1541.82..1541.82 rows=16 width=4)"
-"        ->  Subquery Scan on temp  (cost=1540.85..1541.82 rows=16 width=4)"
-"              ->  GroupAggregate  (cost=1540.85..1541.66 rows=16 width=20)"
-"                    Group Key: actual_weather.cycling_route_id"
-"                    Filter: ((avg((actual_weather.weather).temperature) >= '-2'::double precision) AND (avg((actual_weather.weather).humidity) <= '90'::double precision))"
-"                    ->  Sort  (cost=1540.85..1540.99 rows=57 width=56)"
-"                          Sort Key: actual_weather.cycling_route_id"
-"                          ->  Subquery Scan on actual_weather  (cost=1141.06..1539.18 rows=57 width=56)"
-"                                Filter: (actual_weather.rank = 1)"
-"                                ->  WindowAgg  (cost=1141.06..1397.00 rows=11375 width=79)"
-"                                      ->  Sort  (cost=1141.06..1169.50 rows=11375 width=71)"
-"                                            Sort Key: cycling_routes_weather.point_type, cycling_routes_weather.cycling_route_id, cycling_routes_weather.measure_date DESC"
-"                                            ->  Seq Scan on cycling_routes_weather  (cost=0.00..374.75 rows=11375 width=71)"
-```
+
 **Getting milestones of specific cycling route**
+
 This query is used to select checkpoints for specific route. It creates Point types from Line type by interpolation - `ST_Line_Interpolate_Point` and other functions. Function also returns the length of whole cycling route by using `ST_Length` function.
 
 Example query returns interpolation points and length of the cycling route "Vážska cyklomagistrála".
@@ -195,7 +187,7 @@ WHERE fid = 10
 "  Index Cond: (fid = 12)"
 ```
 
-# Instalation
+# Installation
 1. Install node.js
 ```
 sudo apt-get install curl
