@@ -59,6 +59,9 @@ Weather data is obtained from *OpenWeatherMap API*. Count of weather query point
 
 *Gathering script* runs every X miliseconds - acording to configuration value stored in (`backend/config.json`). It queries every route for actual weather data and stores it into the table `weather_data`.
 
+### Open Street Maps data
+I used OSM data to select Slovakia's administrative regions. This data is used for filtering and inclusion of other geo data, such as points or lines.
+
 ## Api
 *API* is documented interactively through Swagger. When application runs, its interactive docs are accessible via URL: (`localhost:3000/api-docs`). There you can check all parameters needed and response value formats. You can also execute API calls from there as well. 
 ![Screenshot 4](http://i65.tinypic.com/2zf5rep.png)
