@@ -204,3 +204,7 @@ sudo apt-get install nodejs
 ```
 2. Install PostgreSQL database.
 3. Clone `https://github.com/fiit-pdt-2019/gis-project-Thaelin` repo.
+4. Navigate into `backend` folder in the cloned repository and install dependencies.
+```
+npm install
+```
