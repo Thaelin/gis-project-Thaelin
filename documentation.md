@@ -9,8 +9,7 @@ Application works with cycling routes data on the map and it's most important fe
 
 This is it in action:
 
-Default view
-![Screenshot 1](./doc-images/1.png?raw=true)
+![Screenshot 1](./doc-images/1.png?raw=true "Default view")
 Route point's detail
 ![Screenshot 2](./doc-images/5.png?raw=true)
 
