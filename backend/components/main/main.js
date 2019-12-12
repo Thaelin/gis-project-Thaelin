@@ -158,7 +158,7 @@ class Main {
                 });
             });
 
-            this.app.get('/api/shortestPath/:lat/:lon/:mapPart/:minTemp/:maxTemp', (req, res) => {
+            this.app.get('/api/shortestPath/:lat/:lon/:region/:minTemp/:maxTemp', (req, res) => {
                 if (isNaN(req.params.lat) || isNaN(req.params.lon)) {
                     this.logger.warn(`Received /api/shortestPath/:lat/:lon with invalid parameters`);
                     res.status(400).json({
@@ -166,7 +166,7 @@ class Main {
                         errorMsg: `Received /api/shortestPath/:lat/:lon with invalid parameters - is not a number`
                     });
                 }
-                this.db.getShortestPath(req.params.lat, req.params.lon, req.params.mapPart, req.params.minTemp, req.params.maxTemp, (error, data) => {
+                this.db.getShortestPath(req.params.lat, req.params.lon, req.params.region, req.params.minTemp, req.params.maxTemp, (error, data) => {
                     if (error) {
                         console.log(error);
                         this.logger.error(error);
@@ -190,8 +190,8 @@ class Main {
                 });
             });
 
-            this.app.get('/api/cyclingRoutesFilter/:route/:minTemp/:maxTemp', (req, res) => {
-                if (req.params.route && req.params.minTemp && req.params.maxTemp) {
+            this.app.get('/api/cyclingRoutesFilter/:region/:minTemp/:maxTemp', (req, res) => {
+                if (req.params.region && req.params.minTemp && req.params.maxTemp) {
                     this.db.cyclingRoutesFiltered(
                         req.params.route, req.params.minTemp, req.params.maxTemp, 
                         (error, data) => {
@@ -220,10 +220,10 @@ class Main {
                     );
                 }
                 else {
-                    this.logger.warn(`Received /api/cyclingRoutesFilter/:route/:minTemp/:maxTemp with invalid parameters`);
+                    this.logger.warn(`Received /api/cyclingRoutesFilter/:region/:minTemp/:maxTemp with invalid parameters`);
                     res.status(400).json({
                         errorCode: 'PARAMETER_EMPTY',
-                        errorMsg: `Received /api/cyclingRoutesFilter/:route/:minTemp/:maxTemp with invalid parameters - is empty`
+                        errorMsg: `Received /api/cyclingRoutesFilter/:region/:minTemp/:maxTemp with invalid parameters - is empty`
                     });
                 }
             });
