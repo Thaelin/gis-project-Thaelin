@@ -158,6 +158,8 @@ AND ST_Contains(kraj.geo, ST_StartPoint(ST_LineMerge(cr.route)))
 
 This query is used for the second main Use case of the application. It find the shortest path from selected position to nearest cycling route. The most important part of the query is the `pgr_dijkstra` part where the actual shortest path from point A to B is computed. Point A is in our case selected position and point B is the start of the nearest cycling route that conforms the region and temperature conditions.
 
+The inner `WITH` clause is standard as in filtering Use case. Just selects all cycling routes conforming region and temperature conditions. The outer `WITH` clause orders them by distance to selected point and selects the closes one. Closest route's start point is then used as a target point in Dijsktra algorithm.
+
 ```SQL
 WITH closest AS(
   WITH kraj AS (
